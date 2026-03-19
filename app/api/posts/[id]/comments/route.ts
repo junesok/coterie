@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   createCommentNotification,
+  createReplyNotifications,
   createMentionNotifications,
 } from "@/lib/notifications";
 
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
     }
 
     // 답글인 경우 부모 댓글 존재 여부 확인
+    let parentCommentAuthorId: string | null = null;
     if (parentId) {
       const parent = await prisma.comment.findUnique({ where: { id: parentId } });
       if (!parent || parent.postId !== postId) {
@@ -70,6 +72,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
       if (parent.parentId !== null) {
         return NextResponse.json({ success: false, error: "답글에는 답글을 달 수 없습니다." }, { status: 400 });
       }
+      parentCommentAuthorId = parent.authorId;
     }
 
     const comment = await prisma.comment.create({
@@ -86,8 +89,14 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
 
     // 비동기 알림 생성 (await 없이 — 실패해도 댓글 작성은 성공)
     const mentionType = parentId ? "MENTION_COMMENT" : "MENTION_POST";
+    const notifTask = parentId && parentCommentAuthorId
+      // 답글: 부모 댓글 작성자 + 게시물 작성자 모두에게 (중복·본인 제외)
+      ? createReplyNotifications(post.authorId, parentCommentAuthorId, session.user.id, postId, comment.id)
+      // 일반 댓글: 게시물 작성자에게만
+      : createCommentNotification(post.authorId, session.user.id, postId, comment.id);
+
     Promise.allSettled([
-      createCommentNotification(post.authorId, session.user.id, postId, comment.id),
+      notifTask,
       createMentionNotifications(content.trim(), session.user.id, mentionType, postId, comment.id),
     ]).catch((e) => console.error("[notification]", e));
 

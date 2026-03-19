@@ -71,6 +71,47 @@ export async function createCommentNotification(
 }
 
 /**
+ * 답글 알림 생성
+ * - 부모 댓글 작성자에게 알림 (답글 작성자 본인이면 skip)
+ * - 게시물 작성자에게 알림 (답글 작성자 본인이거나, 이미 부모 댓글 작성자와 동일하면 skip)
+ */
+export async function createReplyNotifications(
+  postAuthorId: string,
+  parentCommentAuthorId: string,
+  actorId: string,
+  postId: string,
+  commentId: string
+): Promise<void> {
+  const notifications = [];
+
+  // 부모 댓글 작성자에게 알림 (본인 제외)
+  if (parentCommentAuthorId !== actorId) {
+    notifications.push({
+      type: "COMMENT" as NotificationType,
+      userId: parentCommentAuthorId,
+      actorId,
+      postId,
+      commentId,
+    });
+  }
+
+  // 게시물 작성자에게 알림 (본인 제외, 부모 댓글 작성자와 중복이면 제외)
+  if (postAuthorId !== actorId && postAuthorId !== parentCommentAuthorId) {
+    notifications.push({
+      type: "COMMENT" as NotificationType,
+      userId: postAuthorId,
+      actorId,
+      postId,
+      commentId,
+    });
+  }
+
+  if (notifications.length === 0) return;
+
+  await prisma.notification.createMany({ data: notifications, skipDuplicates: true });
+}
+
+/**
  * 좋아요 알림 생성 (게시물 작성자에게)
  */
 export async function createLikeNotification(
