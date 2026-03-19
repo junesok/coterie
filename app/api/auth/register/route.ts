@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { createId } from "@paralleldrive/cuid2";
 import { prisma } from "@/lib/prisma";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendVerificationEmail, EmailLimitExceededError } from "@/lib/email";
 
 const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
 
@@ -114,8 +114,21 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("[POST /api/auth/register]", error);
+
+    // Resend 발송 한도 초과
+    if (error instanceof EmailLimitExceededError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "오늘 인증 메일 발송 한도를 초과했어요. 내일 다시 시도해 주세요. 이미 메일을 받으셨다면 스팸함을 확인해 보세요.",
+          code: "EMAIL_LIMIT_EXCEEDED",
+        },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, error: "서버 오류가 발생했습니다." },
+      { success: false, error: "서버 오류가 발생했습니다.", code: "SERVER_ERROR" },
       { status: 500 }
     );
   }

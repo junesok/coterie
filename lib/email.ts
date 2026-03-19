@@ -5,8 +5,17 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
 const BASE_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
+// 커스텀 에러: Resend 발송 한도 초과
+export class EmailLimitExceededError extends Error {
+  constructor() {
+    super("EMAIL_LIMIT_EXCEEDED");
+    this.name = "EmailLimitExceededError";
+  }
+}
+
 /**
  * 이메일 인증 링크 발송
+ * - Resend 한도 초과 시 EmailLimitExceededError throw
  */
 export async function sendVerificationEmail(
   email: string,
@@ -14,7 +23,7 @@ export async function sendVerificationEmail(
 ): Promise<void> {
   const verifyUrl = `${BASE_URL}/api/auth/verify-email?token=${token}`;
 
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: "coterie — 이메일 인증",
@@ -54,4 +63,18 @@ export async function sendVerificationEmail(
       </div>
     `,
   });
+
+  // Resend API 에러 처리
+  if (result.error) {
+    const errName = result.error.name ?? "";
+    // rate_limit_exceeded 또는 daily_quota_exceeded
+    if (
+      errName.toLowerCase().includes("rate") ||
+      errName.toLowerCase().includes("quota") ||
+      errName.toLowerCase().includes("limit")
+    ) {
+      throw new EmailLimitExceededError();
+    }
+    throw new Error(`Resend error: ${result.error.message}`);
+  }
 }
