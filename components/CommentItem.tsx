@@ -14,7 +14,7 @@ export interface CommentData {
   isDeleted: boolean;
   isEdited: boolean;
   createdAt: string;
-  author: { id: string; name: string };
+  author: { id: string; name: string; username?: string | null };
   replies?: CommentData[];
 }
 
@@ -87,7 +87,7 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
         <div>
           <div className="flex items-baseline justify-between mb-0.5">
             <span className="text-xs font-bold" style={{ color: "var(--text-base)" }}>
-              {comment.author.name}
+              {comment.author.username ? `@${comment.author.username}` : comment.author.name}
             </span>
             <div className="flex items-center gap-1">
               <span className="text-xs" style={{ color: "var(--text-sub)" }}>{timeAgo}</span>

@@ -117,8 +117,9 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   const isOwner = session?.user?.id === post?.author.id;
-  const replyTarget = replyToId
-    ? comments.find((c) => c.id === replyToId)?.author.name
+  const replyTargetAuthor = replyToId ? comments.find((c) => c.id === replyToId)?.author : null;
+  const replyTarget = replyTargetAuthor
+    ? (replyTargetAuthor.username ? `@${replyTargetAuthor.username}` : replyTargetAuthor.name)
     : null;
 
   return (

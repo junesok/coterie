@@ -40,7 +40,7 @@ export default function InvitePage() {
         ) : codes.length === 0 ? (
           <div className="xp-window p-4 text-center">
             <p className="text-sm" style={{ color: "var(--text-sub)" }}>
-              이메일 인증 완료 후 초대 코드가 발급됩니다.
+              발급된 초대 코드가 없습니다.
             </p>
           </div>
         ) : (
