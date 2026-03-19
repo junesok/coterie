@@ -12,7 +12,7 @@ function LoginForm() {
   const verified = searchParams.get("verified");
   const errorParam = searchParams.get("error");
 
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ function LoginForm() {
     setLoading(true);
 
     const result = await signIn("credentials", {
-      email,
+      username: username.toLowerCase(),
       password,
       redirect: false,
     });
@@ -75,14 +75,16 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div>
-              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>이메일</label>
+              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>유저네임</label>
               <input
-                type="email"
+                type="text"
                 className="xp-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="your_username"
                 required
-                autoComplete="email"
+                autoComplete="username"
+                autoCapitalize="none"
               />
             </div>
             <div>

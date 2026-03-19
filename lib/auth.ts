@@ -15,20 +15,21 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("이메일과 비밀번호를 입력해 주세요.");
+        if (!credentials?.username || !credentials?.password) {
+          throw new Error("유저네임과 비밀번호를 입력해 주세요.");
         }
 
+        // username으로 유저 조회
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { username: credentials.username.toLowerCase() },
         });
 
         if (!user) {
-          throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
+          throw new Error("유저네임 또는 비밀번호가 올바르지 않습니다.");
         }
 
         // 이메일 인증 완료 여부 체크
@@ -42,13 +43,14 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
+          throw new Error("유저네임 또는 비밀번호가 올바르지 않습니다.");
         }
 
         return {
           id: user.id,
           email: user.email,
           name: user.name,
+          isAdmin: user.isAdmin,
         };
       },
     }),
@@ -57,12 +59,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
+        session.user.isAdmin = token.isAdmin as boolean | undefined;
       }
       return session;
     },

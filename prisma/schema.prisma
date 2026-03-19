@@ -10,9 +10,11 @@ datasource db {
 model User {
   id           String       @id @default(cuid())
   email        String       @unique
+  username     String?      @unique  // 로그인에 사용, 영문 소문자+숫자+언더스코어 3~20자
   name         String
   passwordHash String
   isVerified   Boolean      @default(false)
+  isAdmin      Boolean      @default(false)
   invitedById  String?
   invitedBy    User?        @relation("InvitedBy", fields: [invitedById], references: [id])
   invitees     User[]       @relation("InvitedBy")
