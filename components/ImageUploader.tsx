@@ -1,32 +1,42 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import imageCompression from "browser-image-compression";
-import axios from "axios";
 
 interface ImageUploaderProps {
-  value: string[];
-  onChange: (urls: string[]) => void;
+  /** 이미 Cloudinary에 올라간 URL (수정 모드) */
+  uploadedUrls: string[];
+  /** 로컬에서 선택된 파일 (저장 시 업로드) */
+  pendingFiles: File[];
+  onUploadedUrlsChange: (urls: string[]) => void;
+  onPendingFilesChange: (files: File[]) => void;
   maxImages?: number;
 }
 
-export function ImageUploader({ value, onChange, maxImages = 3 }: ImageUploaderProps) {
-  const [uploading, setUploading] = useState(false);
+export function ImageUploader({
+  uploadedUrls,
+  pendingFiles,
+  onUploadedUrlsChange,
+  onPendingFilesChange,
+  maxImages = 3,
+}: ImageUploaderProps) {
+  const [compressing, setCompressing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const totalCount = uploadedUrls.length + pendingFiles.length;
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
 
-    const remaining = maxImages - value.length;
-    const toUpload = files.slice(0, remaining);
+    const remaining = maxImages - totalCount;
+    const toAdd = files.slice(0, remaining);
 
-    setUploading(true);
+    setCompressing(true);
     try {
-      // 클라이언트 측 압축
       const compressed = await Promise.all(
-        toUpload.map((file) =>
+        toAdd.map((file) =>
           imageCompression(file, {
             maxSizeMB: 1,
             maxWidthOrHeight: 1200,
@@ -34,37 +44,21 @@ export function ImageUploader({ value, onChange, maxImages = 3 }: ImageUploaderP
           })
         )
       );
-
-      const formData = new FormData();
-      compressed.forEach((f) => formData.append("images", f));
-
-      const res = await axios.post<{ success: boolean; urls: string[] }>(
-        "/api/upload/image",
-        formData
-      );
-
-      if (res.data.success) {
-        onChange([...value, ...res.data.urls]);
-      }
-    } catch (err) {
-      console.error("이미지 업로드 실패", err);
+      onPendingFilesChange([...pendingFiles, ...compressed]);
     } finally {
-      setUploading(false);
+      setCompressing(false);
       if (inputRef.current) inputRef.current.value = "";
     }
-  }
-
-  function removeImage(index: number) {
-    onChange(value.filter((_, i) => i !== index));
   }
 
   return (
     <div>
       {/* 미리보기 */}
-      {value.length > 0 && (
+      {totalCount > 0 && (
         <div className="flex gap-2 mb-2 flex-wrap">
-          {value.map((url, i) => (
-            <div key={i} className="relative w-24 h-24">
+          {/* 이미 업로드된 이미지 (수정 모드) */}
+          {uploadedUrls.map((url, i) => (
+            <div key={`up-${i}`} className="relative w-24 h-24">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={url}
@@ -74,7 +68,28 @@ export function ImageUploader({ value, onChange, maxImages = 3 }: ImageUploaderP
               />
               <button
                 type="button"
-                onClick={() => removeImage(i)}
+                onClick={() => onUploadedUrlsChange(uploadedUrls.filter((_, j) => j !== i))}
+                className="absolute top-0.5 right-0.5 xp-btn p-0.5"
+                style={{ background: "var(--danger)", color: "#fff", border: "none" }}
+              >
+                <Trash2 size={10} strokeWidth={1.5} />
+              </button>
+            </div>
+          ))}
+
+          {/* 로컬 선택된 이미지 (저장 전 미리보기) */}
+          {pendingFiles.map((file, i) => (
+            <div key={`pend-${i}`} className="relative w-24 h-24">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={URL.createObjectURL(file)}
+                alt={`새 이미지 ${i + 1}`}
+                className="w-24 h-24 object-cover"
+                style={{ border: "2px solid var(--point)", opacity: 0.9 }}
+              />
+              <button
+                type="button"
+                onClick={() => onPendingFilesChange(pendingFiles.filter((_, j) => j !== i))}
                 className="absolute top-0.5 right-0.5 xp-btn p-0.5"
                 style={{ background: "var(--danger)", color: "#fff", border: "none" }}
               >
@@ -85,16 +100,16 @@ export function ImageUploader({ value, onChange, maxImages = 3 }: ImageUploaderP
         </div>
       )}
 
-      {/* 업로드 버튼 */}
-      {value.length < maxImages && (
+      {/* 추가 버튼 */}
+      {totalCount < maxImages && (
         <button
           type="button"
           className="xp-btn flex items-center gap-1 text-sm"
-          disabled={uploading}
+          disabled={compressing}
           onClick={() => inputRef.current?.click()}
         >
           <ImagePlus size={16} strokeWidth={1.5} />
-          {uploading ? "업로드 중..." : `이미지 추가 (${value.length}/${maxImages})`}
+          {compressing ? "처리 중..." : `이미지 추가 (${totalCount}/${maxImages})`}
         </button>
       )}
 

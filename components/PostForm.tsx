@@ -15,11 +15,63 @@ interface PostFormProps {
 export function PostForm({ initialContent = "", initialImages = [], postId }: PostFormProps) {
   const router = useRouter();
   const [content, setContent] = useState(initialContent);
-  const [images, setImages] = useState<string[]>(initialImages);
+
+  // 이미 Cloudinary에 있는 URL (수정 모드 초기값 or 빈 배열)
+  const [uploadedUrls, setUploadedUrls] = useState<string[]>(initialImages);
+  // 로컬에서 선택된 파일 (저장 시 업로드)
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
   const isEdit = !!postId;
+
+  /** pendingFiles를 브라우저에서 Cloudinary로 직접 업로드 */
+  async function uploadPendingFiles(): Promise<string[]> {
+    if (pendingFiles.length === 0) return [];
+
+    setUploadProgress("이미지 업로드 중...");
+
+    // 서버에서 서명 발급
+    const signRes = await axios.post<{
+      timestamp: string;
+      signature: string;
+      apiKey: string;
+      cloudName: string;
+      folder: string;
+    }>("/api/upload/sign");
+
+    const { timestamp, signature, apiKey, cloudName, folder } = signRes.data;
+
+    // 브라우저가 Cloudinary REST API에 직접 전송
+    const urls = await Promise.all(
+      pendingFiles.map(async (file) => {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("folder", folder);
+        fd.append("timestamp", timestamp);
+        fd.append("api_key", apiKey);
+        fd.append("signature", signature);
+
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          { method: "POST", body: fd }
+        );
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.error?.message ?? "이미지 업로드 실패");
+        }
+
+        const data = await res.json();
+        return data.secure_url as string;
+      })
+    );
+
+    setUploadProgress(null);
+    return urls;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,22 +79,30 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
     setLoading(true);
 
     try {
+      // 1. 선택된 파일이 있으면 Cloudinary에 업로드
+      const newUrls = await uploadPendingFiles();
+      const allImages = [...uploadedUrls, ...newUrls];
+
+      // 2. 게시물 저장
       if (isEdit) {
-        await axios.put(`/api/posts/${postId}`, { content, images });
+        await axios.put(`/api/posts/${postId}`, { content, images: allImages });
         router.push(`/post/${postId}`);
       } else {
-        const res = await axios.post("/api/posts", { content, images });
+        const res = await axios.post("/api/posts", { content, images: allImages });
         router.push(`/post/${res.data.post.id}`);
       }
       router.refresh();
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.error ?? "오류가 발생했습니다.");
+      } else if (err instanceof Error) {
+        setError(err.message);
       } else {
         setError("오류가 발생했습니다.");
       }
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   }
 
@@ -51,8 +111,13 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
       <NavBar title={isEdit ? "게시물 수정" : "새 글 작성"} showBack />
 
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 p-4 gap-3">
-        {/* 이미지 업로드 */}
-        <ImageUploader value={images} onChange={setImages} />
+        {/* 이미지 선택 (업로드는 저장 시 수행) */}
+        <ImageUploader
+          uploadedUrls={uploadedUrls}
+          pendingFiles={pendingFiles}
+          onUploadedUrlsChange={setUploadedUrls}
+          onPendingFilesChange={setPendingFiles}
+        />
 
         {/* 텍스트 입력 */}
         <textarea
@@ -62,6 +127,10 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
           onChange={(e) => setContent(e.target.value)}
           required
         />
+
+        {uploadProgress && (
+          <p className="text-xs" style={{ color: "var(--text-sub)" }}>{uploadProgress}</p>
+        )}
 
         {error && (
           <p className="text-xs" style={{ color: "var(--danger)" }}>{error}</p>
@@ -82,7 +151,7 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
             disabled={loading}
             style={{ borderColor: "var(--point)", color: "var(--point)", fontWeight: "bold" }}
           >
-            {loading ? "저장 중..." : "저장"}
+            {loading ? (uploadProgress ?? "저장 중...") : "저장"}
           </button>
         </div>
       </form>
