@@ -81,14 +81,25 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await axios.post("/api/auth/register", {
+      const res = await axios.post("/api/auth/register", {
         ...form,
         username: form.username.toLowerCase(),
       });
-      router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
+
+      // 가입 완료 (이메일 발송 실패 포함) → verify-email 페이지로 이동
+      if (res.data.success) {
+        router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
+        return;
+      }
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.error ?? "오류가 발생했습니다.");
+        const data = err.response?.data;
+        // 미인증 계정이 있는 경우 → 재발송 페이지로 안내
+        if (data?.code === "UNVERIFIED_EMAIL") {
+          router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
+          return;
+        }
+        setError(data?.error ?? "오류가 발생했습니다.");
       } else {
         setError("오류가 발생했습니다.");
       }

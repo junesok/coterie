@@ -42,10 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 초대 코드 유효성 확인
-    const invite = await prisma.inviteCode.findUnique({
-      where: { code: inviteCode },
-    });
-
+    const invite = await prisma.inviteCode.findUnique({ where: { code: inviteCode } });
     if (!invite || invite.isUsed) {
       return NextResponse.json(
         { success: false, error: "유효하지 않거나 이미 사용된 초대 코드입니다." },
@@ -53,9 +50,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 이메일 중복 확인
+    // 이메일 중복 확인 — 이미 가입됐지만 미인증인 경우도 체크
     const existingEmail = await prisma.user.findUnique({ where: { email } });
     if (existingEmail) {
+      // 미인증 상태면 "인증 메일 재발송 가능" 안내
+      if (!existingEmail.isVerified) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "이미 가입된 이메일입니다. 인증 메일을 받지 못하셨다면 재발송해 주세요.",
+            code: "UNVERIFIED_EMAIL",
+          },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
         { success: false, error: "이미 사용 중인 이메일입니다." },
         { status: 400 }
@@ -74,39 +82,66 @@ export async function POST(req: NextRequest) {
     // 비밀번호 해싱
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // 유저 생성
-    const user = await prisma.user.create({
-      data: {
-        name,
-        username: normalizedUsername,
-        email,
-        passwordHash,
-        invitedById: invite.ownerId,
-      },
-    });
-
-    // 초대 코드 사용 처리
-    await prisma.inviteCode.update({
-      where: { id: invite.id },
-      data: {
-        isUsed: true,
-        usedById: user.id,
-        usedAt: new Date(),
-      },
-    });
-
-    // 이메일 인증 토큰 생성 (24시간 유효)
+    // 트랜잭션: 유저 생성 + 초대코드 사용 처리 + 인증 토큰 생성을 한 번에
     const token = createId();
-    await prisma.emailVerification.create({
-      data: {
-        userId: user.id,
-        token,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          name,
+          username: normalizedUsername,
+          email,
+          passwordHash,
+          invitedById: invite.ownerId,
+        },
+      });
+
+      await tx.inviteCode.update({
+        where: { id: invite.id },
+        data: { isUsed: true, usedById: newUser.id, usedAt: new Date() },
+      });
+
+      await tx.emailVerification.create({
+        data: {
+          userId: newUser.id,
+          token,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
+
+      return newUser;
     });
 
-    // 인증 메일 발송
-    await sendVerificationEmail(email, token);
+    // 이메일 발송 — 실패해도 가입은 이미 완료됨
+    try {
+      await sendVerificationEmail(email, token);
+    } catch (emailError) {
+      console.error("[register] 이메일 발송 실패:", emailError);
+
+      if (emailError instanceof EmailLimitExceededError) {
+        return NextResponse.json(
+          {
+            success: true,
+            emailFailed: true,
+            userId: user.id,
+            error: "가입은 완료됐어요. 오늘 인증 메일 발송 한도를 초과했습니다. /verify-email에서 내일 재발송해 주세요.",
+            code: "EMAIL_LIMIT_EXCEEDED",
+          },
+          { status: 201 }
+        );
+      }
+
+      // 기타 이메일 오류: 가입 완료 + 재발송 안내
+      return NextResponse.json(
+        {
+          success: true,
+          emailFailed: true,
+          userId: user.id,
+          error: "가입은 완료됐어요. 인증 메일 발송에 실패했습니다. 인증 페이지에서 재발송해 주세요.",
+          code: "EMAIL_SEND_FAILED",
+        },
+        { status: 201 }
+      );
+    }
 
     return NextResponse.json(
       { success: true, message: "가입 완료. 이메일을 확인해 주세요." },
@@ -114,19 +149,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("[POST /api/auth/register]", error);
-
-    // Resend 발송 한도 초과
-    if (error instanceof EmailLimitExceededError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "오늘 인증 메일 발송 한도를 초과했어요. 내일 다시 시도해 주세요. 이미 메일을 받으셨다면 스팸함을 확인해 보세요.",
-          code: "EMAIL_LIMIT_EXCEEDED",
-        },
-        { status: 429 }
-      );
-    }
-
     return NextResponse.json(
       { success: false, error: "서버 오류가 발생했습니다.", code: "SERVER_ERROR" },
       { status: 500 }
