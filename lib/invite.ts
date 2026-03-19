@@ -10,13 +10,20 @@ function generateInviteCode(): string {
 }
 
 /**
- * 이메일 인증 완료 시 유저에게 초대 코드 3개 자동 생성
+ * 유저에게 초대 코드 생성
+ * - 이메일 인증 완료 시: count = 3 (기본값)
+ * - 관리자가 수동 발급 시: count 지정 가능
  */
-export async function createInviteCodesForUser(userId: string): Promise<void> {
-  const codes = Array.from({ length: 3 }, () => ({
+export async function createInviteCodesForUser(
+  userId: string,
+  count = 3
+): Promise<{ code: string }[]> {
+  const codes = Array.from({ length: count }, () => ({
     code: generateInviteCode(),
     ownerId: userId,
   }));
 
   await prisma.inviteCode.createMany({ data: codes });
+
+  return codes.map((c) => ({ code: c.code }));
 }
