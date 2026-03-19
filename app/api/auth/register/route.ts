@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { createId } from "@paralleldrive/cuid2";
 import { prisma } from "@/lib/prisma";
-import { sendVerificationEmail, EmailLimitExceededError } from "@/lib/email";
+import { sendVerificationEmail, EmailLimitExceededError, EmailDomainError } from "@/lib/email";
 
 const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
 
@@ -122,21 +122,28 @@ export async function POST(req: NextRequest) {
           {
             success: true,
             emailFailed: true,
-            userId: user.id,
-            error: "가입은 완료됐어요. 오늘 인증 메일 발송 한도를 초과했습니다. /verify-email에서 내일 재발송해 주세요.",
             code: "EMAIL_LIMIT_EXCEEDED",
           },
           { status: 201 }
         );
       }
 
-      // 기타 이메일 오류: 가입 완료 + 재발송 안내
+      if (emailError instanceof EmailDomainError) {
+        return NextResponse.json(
+          {
+            success: true,
+            emailFailed: true,
+            code: "EMAIL_DOMAIN_ERROR",
+          },
+          { status: 201 }
+        );
+      }
+
+      // 기타 이메일 오류
       return NextResponse.json(
         {
           success: true,
           emailFailed: true,
-          userId: user.id,
-          error: "가입은 완료됐어요. 인증 메일 발송에 실패했습니다. 인증 페이지에서 재발송해 주세요.",
           code: "EMAIL_SEND_FAILED",
         },
         { status: 201 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createId } from "@paralleldrive/cuid2";
 import { prisma } from "@/lib/prisma";
-import { sendVerificationEmail, EmailLimitExceededError } from "@/lib/email";
+import { sendVerificationEmail, EmailLimitExceededError, EmailDomainError } from "@/lib/email";
 
 // POST /api/auth/resend-verification — 인증 메일 재발송
 export async function POST(req: NextRequest) {
@@ -14,12 +14,11 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({ where: { email } });
 
-    // 유저가 없어도 동일한 응답 (이메일 노출 방지)
     if (!user) {
-      return NextResponse.json({ success: true, message: "메일을 발송했습니다." });
+      // 보안상 동일한 응답 (이메일 존재 여부 노출 방지)
+      return NextResponse.json({ success: true });
     }
 
-    // 이미 인증된 경우
     if (user.isVerified) {
       return NextResponse.json(
         { success: false, error: "이미 인증된 계정입니다.", code: "ALREADY_VERIFIED" },
@@ -27,7 +26,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 기존 미사용 토큰이 있으면 재활용, 없으면 새로 생성
+    // 유효한 토큰 재활용, 없으면 새로 생성
     const existing = await prisma.emailVerification.findFirst({
       where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { expiresAt: "desc" },
@@ -49,8 +48,10 @@ export async function POST(req: NextRequest) {
 
     await sendVerificationEmail(email, token);
 
-    return NextResponse.json({ success: true, message: "인증 메일을 재발송했습니다." });
+    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("[POST /api/auth/resend-verification]", error);
+
     if (error instanceof EmailLimitExceededError) {
       return NextResponse.json(
         {
@@ -62,7 +63,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.error("[POST /api/auth/resend-verification]", error);
-    return NextResponse.json({ success: false, error: "서버 오류가 발생했습니다." }, { status: 500 });
+    if (error instanceof EmailDomainError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "이메일 발송 설정에 문제가 있어요. 관리자에게 문의해 주세요.",
+          code: "EMAIL_DOMAIN_ERROR",
+          // 개발용 디버그 메시지 (프로덕션에서는 Vercel 로그에서 확인)
+          debug: process.env.NODE_ENV !== "production" ? error.resendMessage : undefined,
+        },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: false, error: "서버 오류가 발생했습니다.", code: "SERVER_ERROR" },
+      { status: 500 }
+    );
   }
 }

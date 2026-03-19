@@ -86,9 +86,11 @@ export default function RegisterPage() {
         username: form.username.toLowerCase(),
       });
 
-      // 가입 완료 (이메일 발송 실패 포함) → verify-email 페이지로 이동
+      // 가입 완료 → verify-email 페이지로 이동
       if (res.data.success) {
-        router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
+        const params = new URLSearchParams({ email: form.email });
+        if (res.data.emailFailed) params.set("emailFailed", "1");
+        router.push(`/verify-email?${params.toString()}`);
         return;
       }
     } catch (err) {

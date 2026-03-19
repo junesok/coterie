@@ -13,9 +13,18 @@ export class EmailLimitExceededError extends Error {
   }
 }
 
+// 커스텀 에러: 발신 도메인 미인증 (onboarding@resend.dev 제한 등)
+export class EmailDomainError extends Error {
+  public readonly resendMessage: string;
+  constructor(resendMessage: string) {
+    super("EMAIL_DOMAIN_ERROR");
+    this.name = "EmailDomainError";
+    this.resendMessage = resendMessage;
+  }
+}
+
 /**
  * 이메일 인증 링크 발송
- * - Resend 한도 초과 시 EmailLimitExceededError throw
  */
 export async function sendVerificationEmail(
   email: string,
@@ -64,17 +73,29 @@ export async function sendVerificationEmail(
     `,
   });
 
-  // Resend API 에러 처리
   if (result.error) {
-    const errName = result.error.name ?? "";
-    // rate_limit_exceeded 또는 daily_quota_exceeded
-    if (
-      errName.toLowerCase().includes("rate") ||
-      errName.toLowerCase().includes("quota") ||
-      errName.toLowerCase().includes("limit")
-    ) {
+    const errName = (result.error.name ?? "").toLowerCase();
+    const errMsg = result.error.message ?? "";
+
+    console.error("[Resend] error:", JSON.stringify(result.error));
+
+    // 발송 한도 초과
+    if (errName.includes("rate") || errName.includes("quota") || errName.includes("limit")) {
       throw new EmailLimitExceededError();
     }
-    throw new Error(`Resend error: ${result.error.message}`);
+
+    // 도메인 미인증 / 테스트 모드 수신자 제한
+    // onboarding@resend.dev 는 Resend 계정 소유자 이메일에만 발송 가능
+    if (
+      errName.includes("domain") ||
+      errName.includes("invalid_from") ||
+      errMsg.toLowerCase().includes("domain") ||
+      errMsg.toLowerCase().includes("not allowed") ||
+      errMsg.toLowerCase().includes("testing")
+    ) {
+      throw new EmailDomainError(errMsg);
+    }
+
+    throw new EmailDomainError(errMsg || errName || "unknown resend error");
   }
 }
