@@ -309,3 +309,34 @@ b48edb7  chore: 프로젝트 초기 세팅 — Next.js 16, Prisma 7, 환경 변�
 | Vercel 서버 위치 | 워싱턴(iad1) 기준 빌드 — 실제 DB는 싱가포르(ap-southeast-1) |
 | `RESEND_FROM_EMAIL` | 현재 `onboarding@resend.dev` (테스트용) — 프로덕션 운영 시 커스텀 도메인 이메일 권장 |
 | 초대 코드 발급 시점 | 이메일 인증 완료 시점 — 미인증 유저는 코드 없음 |
+
+---
+
+## 12. 배포 트러블슈팅 기록
+
+### [2026-03-19] Vercel 빌드 에러 — Prisma 클라이언트 누락
+
+**증상:**
+```
+Error: Turbopack build failed with 1 errors:
+./lib/prisma.ts:1:1
+Module not found: Can't resolve '@/app/generated/prisma/client'
+```
+
+**원인:**
+Prisma 7은 `prisma generate` 실행 시 클라이언트를 `app/generated/prisma/`에 생성한다.
+해당 경로가 `.gitignore`에 포함되어 있어 GitHub에 올라가지 않고,
+Vercel 빌드 환경에서는 생성된 클라이언트가 없는 상태로 빌드가 실행되어 import 실패.
+
+**해결:**
+`package.json`에 `postinstall` 스크립트 추가 — Vercel이 `npm install` 완료 후 자동으로 `prisma generate` 실행:
+
+```json
+"scripts": {
+  "postinstall": "prisma generate"
+}
+```
+
+**교훈:**
+Prisma 7의 `prisma-client` provider는 생성 경로가 프로젝트 내부(`app/generated/`)이므로,
+`.gitignore`에 포함된 경우 반드시 CI/CD 빌드 단계에서 `prisma generate`를 실행해야 한다.
