@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
 import { ModerationReason } from "@/app/generated/prisma/client";
+import { createAdminDeleteNotification } from "@/lib/notifications";
 
 // DELETE /api/admin/posts/[id] — 관리자 게시물 삭제 (사유 포함)
 export async function DELETE(
@@ -41,6 +42,14 @@ export async function DELETE(
       },
     }),
   ]);
+
+  // 게시물 작성자에게 알림 (비동기)
+  createAdminDeleteNotification(
+    post.authorId,
+    "ADMIN_DELETE_POST",
+    id,
+    reason as ModerationReason
+  ).catch((e) => console.error("[admin notification]", e));
 
   return NextResponse.json({ success: true });
 }

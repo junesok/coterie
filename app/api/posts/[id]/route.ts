@@ -16,9 +16,10 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]"
     const post = await prisma.post.findUnique({
       where: { id },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, username: true } },
         images: { orderBy: { order: "asc" } },
-        _count: { select: { comments: true } },
+        _count: { select: { comments: true, likes: true } },
+        likes: { where: { userId: session.user.id }, select: { id: true } },
       },
     });
 
@@ -26,7 +27,11 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]"
       return NextResponse.json({ success: false, error: "게시물을 찾을 수 없습니다." }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, post });
+    const { likes, ...rest } = post;
+    return NextResponse.json({
+      success: true,
+      post: { ...rest, likeCount: post._count.likes, isLiked: likes.length > 0 },
+    });
   } catch (error) {
     console.error("[GET /api/posts/[id]]", error);
     return NextResponse.json({ success: false, error: "서버 오류가 발생했습니다." }, { status: 500 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createMentionNotifications } from "@/lib/notifications";
 
 const PAGE_SIZE = 15;
 
@@ -16,23 +17,33 @@ export async function GET(req: NextRequest) {
     const page = Number(req.nextUrl.searchParams.get("page") ?? "1");
     const skip = (page - 1) * PAGE_SIZE;
 
+    const userId = session.user.id;
+
     const [posts, total] = await Promise.all([
       prisma.post.findMany({
         orderBy: { createdAt: "desc" },
         skip,
         take: PAGE_SIZE,
         include: {
-          author: { select: { id: true, name: true } },
+          author: { select: { id: true, name: true, username: true } },
           images: { orderBy: { order: "asc" }, select: { url: true, order: true } },
-          _count: { select: { comments: true } },
+          _count: { select: { comments: true, likes: true } },
+          likes: { where: { userId }, select: { id: true } },
         },
       }),
       prisma.post.count(),
     ]);
 
+    const postsWithLike = posts.map((p) => ({
+      ...p,
+      likeCount: p._count.likes,
+      isLiked: p.likes.length > 0,
+      likes: undefined,
+    }));
+
     return NextResponse.json({
       success: true,
-      posts,
+      posts: postsWithLike,
       pagination: { page, pageSize: PAGE_SIZE, total, totalPages: Math.ceil(total / PAGE_SIZE) },
     });
   } catch (error) {
@@ -70,10 +81,18 @@ export async function POST(req: NextRequest) {
           : undefined,
       },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, username: true } },
         images: { orderBy: { order: "asc" } },
       },
     });
+
+    // @멘션 알림 생성 (비동기)
+    createMentionNotifications(
+      content.trim(),
+      session.user.id,
+      "MENTION_POST",
+      post.id
+    ).catch((e) => console.error("[mention notification]", e));
 
     return NextResponse.json({ success: true, post }, { status: 201 });
   } catch (error) {

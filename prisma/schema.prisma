@@ -8,22 +8,24 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  username     String?      @unique  // 로그인에 사용, 영문 소문자+숫자+언더스코어 3~20자
-  name         String
-  passwordHash String
-  isVerified   Boolean      @default(false)
-  isAdmin      Boolean      @default(false)
-  invitedById  String?
-  invitedBy    User?        @relation("InvitedBy", fields: [invitedById], references: [id])
-  invitees     User[]       @relation("InvitedBy")
-  inviteCodes  InviteCode[] @relation("Owner")
-  usedCode     InviteCode?  @relation("UsedBy")
+  id                String         @id @default(cuid())
+  email             String         @unique
+  username          String?        @unique  // 로그인에 사용, 영문 소문자+숫자+언더스코어 3~20자
+  name              String
+  passwordHash      String
+  isVerified        Boolean        @default(false)
+  isAdmin           Boolean        @default(false)
+  invitedById       String?
+  invitedBy         User?          @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitees          User[]         @relation("InvitedBy")
+  inviteCodes       InviteCode[]   @relation("Owner")
+  usedCode          InviteCode?    @relation("UsedBy")
   posts             Post[]
   comments          Comment[]
+  likes             Like[]
+  notifications     Notification[] @relation("NotificationReceiver")
   moderationLogs    ModerationLog[]
-  createdAt         DateTime     @default(now())
+  createdAt         DateTime       @default(now())
 }
 
 model InviteCode {
@@ -47,14 +49,15 @@ model EmailVerification {
 }
 
 model Post {
-  id        String      @id @default(cuid())
+  id        String         @id @default(cuid())
   content   String
-  author    User        @relation(fields: [authorId], references: [id])
+  author    User           @relation(fields: [authorId], references: [id])
   authorId  String
   images    PostImage[]
   comments  Comment[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  likes     Like[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 }
 
 model PostImage {
@@ -82,6 +85,30 @@ model Comment {
   updatedAt DateTime  @updatedAt
 }
 
+model Like {
+  id        String   @id @default(cuid())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])  // 한 게시물에 한 번만
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  userId    String           // 알림 수신자
+  user      User             @relation("NotificationReceiver", fields: [userId], references: [id])
+  actorId   String?          // 행동한 유저 (관리자 삭제 시 null 가능)
+  postId    String?
+  commentId String?
+  reason    ModerationReason?  // 관리자 삭제 시 사유
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+}
+
 model ModerationLog {
   id         String           @id @default(cuid())
   targetType ModerationTarget
@@ -104,4 +131,13 @@ enum ModerationReason {
   VIOLENCE
   PRIVACY_VIOLATION
   OTHER
+}
+
+enum NotificationType {
+  COMMENT
+  LIKE
+  MENTION_POST
+  MENTION_COMMENT
+  ADMIN_DELETE_POST
+  ADMIN_DELETE_COMMENT
 }

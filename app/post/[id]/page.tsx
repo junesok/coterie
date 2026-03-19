@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
+import { Heart } from "lucide-react";
 import axios from "axios";
 import { NavBar, EditDeleteButtons } from "@/components/NavBar";
 import { ImageCarousel } from "@/components/ImageCarousel";
@@ -15,9 +16,11 @@ interface Post {
   id: string;
   content: string;
   createdAt: string;
-  author: { id: string; name: string };
+  author: { id: string; name: string; username?: string | null };
   images: { url: string; order: number }[];
   _count: { comments: number };
+  likeCount: number;
+  isLiked: boolean;
 }
 
 export default function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +33,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [liking, setLiking] = useState(false);
 
   // 댓글 입력
   const [commentText, setCommentText] = useState("");
@@ -80,6 +84,28 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
+  async function handleLikeToggle() {
+    if (!post || liking) return;
+    setLiking(true);
+    try {
+      if (post.isLiked) {
+        const res = await axios.delete(`/api/posts/${id}/like`);
+        setPost((prev) =>
+          prev ? { ...prev, isLiked: false, likeCount: res.data.likeCount } : prev
+        );
+      } else {
+        const res = await axios.post(`/api/posts/${id}/like`);
+        setPost((prev) =>
+          prev ? { ...prev, isLiked: true, likeCount: res.data.likeCount } : prev
+        );
+      }
+    } catch {
+      // 에러 무시 (이미 좋아요 등)
+    } finally {
+      setLiking(false);
+    }
+  }
+
   function handleReplyStart(commentId: string) {
     setReplyToId(commentId);
     inputRef.current?.focus();
@@ -124,12 +150,35 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
             {/* 본문 */}
             <div className="p-4">
               <p className="text-xs mb-1" style={{ color: "var(--text-sub)" }}>
-                {post.author.name} ·{" "}
+                {post.author.username ? `@${post.author.username}` : post.author.name} ·{" "}
                 {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ko })}
               </p>
               <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-base)" }}>
                 {post.content}
               </p>
+
+              {/* 좋아요 버튼 */}
+              <div className="flex items-center gap-2 mt-3">
+                <button
+                  onClick={handleLikeToggle}
+                  disabled={liking}
+                  className="flex items-center gap-1.5 text-xs"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: post.isLiked ? "var(--danger)" : "var(--text-sub)",
+                    padding: 0,
+                  }}
+                >
+                  <Heart
+                    size={15}
+                    strokeWidth={1.5}
+                    fill={post.isLiked ? "var(--danger)" : "none"}
+                  />
+                  <span>{post.likeCount > 0 ? post.likeCount : ""}</span>
+                </button>
+              </div>
             </div>
 
             <hr className="xp-hr" />
@@ -165,11 +214,21 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
             style={{ background: "var(--bg-card)", borderTop: "1px solid var(--border)" }}
           >
             {replyTarget && (
-              <div className="flex items-center justify-between px-3 py-1" style={{ background: "var(--bg-page)", borderBottom: "1px solid var(--border)" }}>
+              <div
+                className="flex items-center justify-between px-3 py-1"
+                style={{ background: "var(--bg-page)", borderBottom: "1px solid var(--border)" }}
+              >
                 <span className="text-xs" style={{ color: "var(--point)" }}>
                   {replyTarget}에게 답글
                 </span>
-                <button type="button" onClick={cancelReply} className="text-xs" style={{ color: "var(--text-sub)", background: "none", border: "none", cursor: "pointer" }}>취소</button>
+                <button
+                  type="button"
+                  onClick={cancelReply}
+                  className="text-xs"
+                  style={{ color: "var(--text-sub)", background: "none", border: "none", cursor: "pointer" }}
+                >
+                  취소
+                </button>
               </div>
             )}
             <div className="flex gap-2 p-2">

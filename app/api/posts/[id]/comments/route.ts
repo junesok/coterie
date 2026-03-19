@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  createCommentNotification,
+  createMentionNotifications,
+} from "@/lib/notifications";
 
 // GET /api/posts/[id]/comments — 댓글 + 답글 목록
 export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]/comments">) {
@@ -18,11 +22,11 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
       where: { postId, parentId: null },
       orderBy: { createdAt: "asc" },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, username: true } },
         replies: {
           orderBy: { createdAt: "asc" },
           include: {
-            author: { select: { id: true, name: true } },
+            author: { select: { id: true, name: true, username: true } },
           },
         },
       },
@@ -50,6 +54,12 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
       return NextResponse.json({ success: false, error: "내용을 입력해 주세요." }, { status: 400 });
     }
 
+    // 게시물 조회 (작성자 알림용)
+    const post = await prisma.post.findUnique({ where: { id: postId } });
+    if (!post) {
+      return NextResponse.json({ success: false, error: "게시물을 찾을 수 없습니다." }, { status: 404 });
+    }
+
     // 답글인 경우 부모 댓글 존재 여부 확인
     if (parentId) {
       const parent = await prisma.comment.findUnique({ where: { id: parentId } });
@@ -70,9 +80,16 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
         parentId: parentId ?? null,
       },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, username: true } },
       },
     });
+
+    // 비동기 알림 생성 (await 없이 — 실패해도 댓글 작성은 성공)
+    const mentionType = parentId ? "MENTION_COMMENT" : "MENTION_POST";
+    Promise.allSettled([
+      createCommentNotification(post.authorId, session.user.id, postId, comment.id),
+      createMentionNotifications(content.trim(), session.user.id, mentionType, postId, comment.id),
+    ]).catch((e) => console.error("[notification]", e));
 
     return NextResponse.json({ success: true, comment }, { status: 201 });
   } catch (error) {
