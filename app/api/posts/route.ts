@@ -1,0 +1,83 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+const PAGE_SIZE = 15;
+
+// GET /api/posts?page=1 — 피드 목록 (최신순)
+export async function GET(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    const page = Number(req.nextUrl.searchParams.get("page") ?? "1");
+    const skip = (page - 1) * PAGE_SIZE;
+
+    const [posts, total] = await Promise.all([
+      prisma.post.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: PAGE_SIZE,
+        include: {
+          author: { select: { id: true, name: true } },
+          images: { orderBy: { order: "asc" }, select: { url: true, order: true } },
+          _count: { select: { comments: true } },
+        },
+      }),
+      prisma.post.count(),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      posts,
+      pagination: { page, pageSize: PAGE_SIZE, total, totalPages: Math.ceil(total / PAGE_SIZE) },
+    });
+  } catch (error) {
+    console.error("[GET /api/posts]", error);
+    return NextResponse.json({ success: false, error: "서버 오류가 발생했습니다." }, { status: 500 });
+  }
+}
+
+// POST /api/posts — 게시물 작성
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    const { content, images } = await req.json();
+
+    if (!content || content.trim() === "") {
+      return NextResponse.json({ success: false, error: "내용을 입력해 주세요." }, { status: 400 });
+    }
+
+    if (images && images.length > 3) {
+      return NextResponse.json({ success: false, error: "이미지는 최대 3장까지 첨부할 수 있습니다." }, { status: 400 });
+    }
+
+    const post = await prisma.post.create({
+      data: {
+        content: content.trim(),
+        authorId: session.user.id,
+        images: images?.length
+          ? {
+              create: images.map((url: string, i: number) => ({ url, order: i })),
+            }
+          : undefined,
+      },
+      include: {
+        author: { select: { id: true, name: true } },
+        images: { orderBy: { order: "asc" } },
+      },
+    });
+
+    return NextResponse.json({ success: true, post }, { status: 201 });
+  } catch (error) {
+    console.error("[POST /api/posts]", error);
+    return NextResponse.json({ success: false, error: "서버 오류가 발생했습니다." }, { status: 500 });
+  }
+}
