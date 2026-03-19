@@ -10,6 +10,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const verified = searchParams.get("verified");
+  const registered = searchParams.get("registered");
   const errorParam = searchParams.get("error");
 
   const [username, setUsername] = useState("");
@@ -62,6 +63,11 @@ function LoginForm() {
 
         {/* 콘텐츠 */}
         <div className="p-5">
+          {registered && (
+            <div className="mb-4 p-2 border text-sm" style={{ borderColor: "var(--point)", color: "var(--point)" }}>
+              가입 완료! 로그인해 주세요.
+            </div>
+          )}
           {verified && (
             <div className="mb-4 p-2 border text-sm" style={{ borderColor: "var(--point)", color: "var(--point)" }}>
               이메일 인증 완료! 로그인해 주세요.

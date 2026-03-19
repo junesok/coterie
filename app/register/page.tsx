@@ -86,21 +86,14 @@ export default function RegisterPage() {
         username: form.username.toLowerCase(),
       });
 
-      // 가입 완료 → verify-email 페이지로 이동
+      // 가입 완료 → 로그인 페이지로 이동
       if (res.data.success) {
-        const params = new URLSearchParams({ email: form.email });
-        if (res.data.emailFailed) params.set("emailFailed", "1");
-        router.push(`/verify-email?${params.toString()}`);
+        router.push("/login?registered=1");
         return;
       }
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const data = err.response?.data;
-        // 미인증 계정이 있는 경우 → 재발송 페이지로 안내
-        if (data?.code === "UNVERIFIED_EMAIL") {
-          router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
-          return;
-        }
         setError(data?.error ?? "오류가 발생했습니다.");
       } else {
         setError("오류가 발생했습니다.");

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { createId } from "@paralleldrive/cuid2";
 import { prisma } from "@/lib/prisma";
-import { sendVerificationEmail, EmailLimitExceededError, EmailDomainError } from "@/lib/email";
 
 const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
 
@@ -50,20 +48,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 이메일 중복 확인 — 이미 가입됐지만 미인증인 경우도 체크
+    // 이메일 중복 확인
     const existingEmail = await prisma.user.findUnique({ where: { email } });
     if (existingEmail) {
-      // 미인증 상태면 "인증 메일 재발송 가능" 안내
-      if (!existingEmail.isVerified) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "이미 가입된 이메일입니다. 인증 메일을 받지 못하셨다면 재발송해 주세요.",
-            code: "UNVERIFIED_EMAIL",
-          },
-          { status: 400 }
-        );
-      }
       return NextResponse.json(
         { success: false, error: "이미 사용 중인 이메일입니다." },
         { status: 400 }
@@ -82,15 +69,15 @@ export async function POST(req: NextRequest) {
     // 비밀번호 해싱
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // 트랜잭션: 유저 생성 + 초대코드 사용 처리 + 인증 토큰 생성을 한 번에
-    const token = createId();
-    const user = await prisma.$transaction(async (tx) => {
+    // 트랜잭션: 유저 생성 + 초대코드 사용 처리
+    await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
           name,
           username: normalizedUsername,
           email,
           passwordHash,
+          isVerified: true, // 이메일 인증 없이 즉시 활성화
           invitedById: invite.ownerId,
         },
       });
@@ -99,59 +86,10 @@ export async function POST(req: NextRequest) {
         where: { id: invite.id },
         data: { isUsed: true, usedById: newUser.id, usedAt: new Date() },
       });
-
-      await tx.emailVerification.create({
-        data: {
-          userId: newUser.id,
-          token,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        },
-      });
-
-      return newUser;
     });
 
-    // 이메일 발송 — 실패해도 가입은 이미 완료됨
-    try {
-      await sendVerificationEmail(email, token);
-    } catch (emailError) {
-      console.error("[register] 이메일 발송 실패:", emailError);
-
-      if (emailError instanceof EmailLimitExceededError) {
-        return NextResponse.json(
-          {
-            success: true,
-            emailFailed: true,
-            code: "EMAIL_LIMIT_EXCEEDED",
-          },
-          { status: 201 }
-        );
-      }
-
-      if (emailError instanceof EmailDomainError) {
-        return NextResponse.json(
-          {
-            success: true,
-            emailFailed: true,
-            code: "EMAIL_DOMAIN_ERROR",
-          },
-          { status: 201 }
-        );
-      }
-
-      // 기타 이메일 오류
-      return NextResponse.json(
-        {
-          success: true,
-          emailFailed: true,
-          code: "EMAIL_SEND_FAILED",
-        },
-        { status: 201 }
-      );
-    }
-
     return NextResponse.json(
-      { success: true, message: "가입 완료. 이메일을 확인해 주세요." },
+      { success: true, message: "가입 완료." },
       { status: 201 }
     );
   } catch (error) {
