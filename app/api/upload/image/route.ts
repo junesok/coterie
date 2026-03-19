@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { v2 as cloudinary } from "cloudinary";
+import { createHash } from "crypto";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME!;
+const API_KEY = process.env.CLOUDINARY_API_KEY!;
+const API_SECRET = process.env.CLOUDINARY_API_SECRET!;
+
+// Cloudinary 서명 생성 (SHA-256)
+function sign(params: Record<string, string>): string {
+  const payload = Object.keys(params)
+    .sort()
+    .map((k) => `${k}=${params[k]}`)
+    .join("&");
+  return createHash("sha256").update(payload + API_SECRET).digest("hex");
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,21 +35,33 @@ export async function POST(req: NextRequest) {
     }
 
     const uploadPromises = files.map(async (file) => {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const base64 = buffer.toString("base64");
-      const dataUri = `data:${file.type};base64,${base64}`;
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const sigParams = { folder: "coterie", timestamp };
+      const signature = sign(sigParams);
 
-      const result = await cloudinary.uploader.upload(dataUri, {
-        folder: "coterie",
-        transformation: [{ quality: "auto", fetch_format: "auto" }],
-      });
+      // Cloudinary REST API에 직접 multipart 전송 (SDK 없음)
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", "coterie");
+      fd.append("timestamp", timestamp);
+      fd.append("api_key", API_KEY);
+      fd.append("signature", signature);
 
-      return result.secure_url;
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        { method: "POST", body: fd }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message ?? `Cloudinary error ${res.status}`);
+      }
+
+      const data = await res.json();
+      return data.secure_url as string;
     });
 
     const urls = await Promise.all(uploadPromises);
-
     return NextResponse.json({ success: true, urls });
   } catch (error) {
     console.error("[POST /api/upload/image]", error);
