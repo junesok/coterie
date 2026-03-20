@@ -1,8 +1,9 @@
 "use client";
 
-import { ChevronLeft, Settings, Pencil, Trash2, Bell } from "lucide-react";
+import { ChevronLeft, Settings, Pencil, Trash2, Bell, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import axios from "axios";
 
 interface NavBarProps {
@@ -23,7 +24,7 @@ function useUnreadCount(enabled: boolean) {
       axios
         .get("/api/notifications")
         .then((res) => setCount(res.data.unreadCount ?? 0))
-        .catch(() => {}); // 폴링 실패 무시
+        .catch(() => {});
     };
 
     fetch();
@@ -41,7 +42,9 @@ export function NavBar({
   showNotification = true,
 }: NavBarProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const unreadCount = useUnreadCount(showNotification);
+  const isAdmin = session?.user?.isAdmin;
 
   return (
     <div>
@@ -63,19 +66,30 @@ export function NavBar({
               }}
             >
               <ChevronLeft size={14} strokeWidth={2} />
-              <span style={{ lineHeight: 1 }}>뒤로</span>
+              <span style={{ lineHeight: 1 }}>back</span>
             </button>
           )}
           <span className="font-bold text-sm text-white">{title}</span>
         </div>
         <div className="flex items-center gap-1">
           {rightSlot}
+          {/* 관리자 버튼 — 관리자 계정에만 표시 */}
+          {isAdmin && (
+            <button
+              onClick={() => router.push("/coterie-admin/dashboard")}
+              className="relative p-1 text-white"
+              style={{ background: "transparent", border: "none", cursor: "pointer" }}
+              title="admin"
+            >
+              <ShieldCheck size={16} strokeWidth={1.5} />
+            </button>
+          )}
           {showNotification && (
             <button
               onClick={() => router.push("/notifications")}
               className="relative p-1 text-white"
               style={{ background: "transparent", border: "none", cursor: "pointer" }}
-              title="알림"
+              title="notifications"
             >
               <Bell size={16} strokeWidth={1.5} />
               {unreadCount > 0 && (
@@ -136,7 +150,7 @@ export function EditDeleteButtons({
         }}
       >
         <Pencil size={11} strokeWidth={1.5} />
-        수정
+        edit
       </button>
       <button
         onClick={onDelete}
@@ -153,7 +167,7 @@ export function EditDeleteButtons({
         }}
       >
         <Trash2 size={11} strokeWidth={1.5} />
-        삭제
+        delete
       </button>
     </div>
   );

@@ -33,15 +33,15 @@ export default function InvitePage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <NavBar title="초대 코드" showBack />
+      <NavBar title="invite codes" showBack />
 
       <div className="p-4 flex flex-col gap-3">
         {loading ? (
-          <p className="text-sm text-center mt-8" style={{ color: "var(--text-sub)" }}>불러오는 중...</p>
+          <p className="text-sm text-center mt-8" style={{ color: "var(--text-sub)" }}>Loading...</p>
         ) : codes.length === 0 ? (
           <div className="xp-window p-4 text-center">
             <p className="text-sm" style={{ color: "var(--text-sub)" }}>
-              발급된 초대 코드가 없습니다.
+              No invite codes yet.
             </p>
           </div>
         ) : (
@@ -50,7 +50,7 @@ export default function InvitePage() {
               <div className="xp-titlebar">
                 <div className="flex items-center gap-1.5">
                   <Key size={12} strokeWidth={1.5} />
-                  <span className="text-xs">{code.isUsed ? "사용됨" : "미사용"}</span>
+                  <span className="text-xs">{code.isUsed ? "used" : "unused"}</span>
                 </div>
               </div>
               <div className="p-3 flex items-center justify-between">
@@ -66,12 +66,12 @@ export default function InvitePage() {
                   disabled={code.isUsed}
                 >
                   <Copy size={12} strokeWidth={1.5} />
-                  {copied === code.code ? "복사됨!" : "링크 복사"}
+                  {copied === code.code ? "copied!" : "copy link"}
                 </button>
               </div>
               {code.isUsed && code.usedBy && (
                 <p className="px-3 pb-2 text-xs" style={{ color: "var(--text-sub)" }}>
-                  사용자: {code.usedBy.name}
+                  used by: {code.usedBy.name}
                 </p>
               )}
             </div>

@@ -31,7 +31,7 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
   async function uploadPendingFiles(): Promise<string[]> {
     if (pendingFiles.length === 0) return [];
 
-    setUploadProgress("이미지 업로드 중...");
+    setUploadProgress("Uploading images...");
 
     // 서버에서 서명 발급
     const signRes = await axios.post<{
@@ -61,7 +61,7 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err?.error?.message ?? "이미지 업로드 실패");
+          throw new Error(err?.error?.message ?? "Image upload failed");
         }
 
         const data = await res.json();
@@ -94,11 +94,11 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
       router.refresh();
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.error ?? "오류가 발생했습니다.");
+        setError(err.response?.data?.error ?? "Something went wrong.");
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("오류가 발생했습니다.");
+        setError("Something went wrong.");
       }
     } finally {
       setLoading(false);
@@ -108,7 +108,7 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
 
   return (
     <div className="flex flex-col flex-1">
-      <NavBar title={isEdit ? "게시물 수정" : "새 글 작성"} showBack />
+      <NavBar title={isEdit ? "edit post" : "new post"} showBack />
 
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 p-4 gap-3">
         {/* 이미지 선택 (업로드는 저장 시 수행) */}
@@ -122,7 +122,7 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
         {/* 텍스트 입력 */}
         <textarea
           className="xp-input flex-1 resize-none min-h-[200px]"
-          placeholder="내용을 입력하세요..."
+          placeholder="what's on your mind..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
           required
@@ -143,7 +143,7 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
             className="xp-btn"
             onClick={() => router.back()}
           >
-            취소
+            cancel
           </button>
           <button
             type="submit"
@@ -151,7 +151,7 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
             disabled={loading}
             style={{ borderColor: "var(--point)", color: "var(--point)", fontWeight: "bold" }}
           >
-            {loading ? (uploadProgress ?? "저장 중...") : "저장"}
+            {loading ? (uploadProgress ?? "saving...") : (isEdit ? "save" : "post")}
           </button>
         </div>
       </form>

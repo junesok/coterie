@@ -4,7 +4,19 @@ import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: "coterie",
-  description: "초대받은 사람들만의 프라이빗 소셜 커뮤니티",
+  description: "coterie",
+  openGraph: {
+    title: "coterie",
+    description: "coterie",
+    images: [{ url: "/coterie.jpg", width: 1200, height: 630, alt: "coterie" }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "coterie",
+    description: "coterie",
+    images: ["/coterie.jpg"],
+  },
 };
 
 // iPhone 홈 바 영역까지 뷰포트 확장

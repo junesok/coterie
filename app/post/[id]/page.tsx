@@ -4,7 +4,7 @@ import { use, useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { formatDistanceToNow } from "date-fns";
-import { ko } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Heart } from "lucide-react";
 import axios from "axios";
 import { NavBar, EditDeleteButtons } from "@/components/NavBar";
@@ -125,7 +125,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="flex flex-col flex-1" style={{ background: "var(--bg-card)" }}>
       <NavBar
-        title="게시물"
+        title="post"
         showBack
         rightSlot={
           isOwner && post ? (
@@ -138,9 +138,9 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
       />
 
       {loading ? (
-        <p className="text-center mt-8 text-sm" style={{ color: "var(--text-sub)" }}>불러오는 중...</p>
+        <p className="text-center mt-8 text-sm" style={{ color: "var(--text-sub)" }}>Loading...</p>
       ) : !post ? (
-        <p className="text-center mt-8 text-sm" style={{ color: "var(--danger)" }}>게시물을 찾을 수 없습니다.</p>
+        <p className="text-center mt-8 text-sm" style={{ color: "var(--danger)" }}>Post not found.</p>
       ) : (
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* 스크롤 영역 */}
@@ -152,7 +152,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
             <div className="p-4">
               <p className="text-xs mb-1" style={{ color: "var(--text-sub)" }}>
                 {post.author.username ? `@${post.author.username}` : post.author.name} ·{" "}
-                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ko })}
+                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: enUS })}
               </p>
               <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-base)" }}>
                 {post.content}
@@ -187,11 +187,11 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
             {/* 댓글 목록 */}
             <div className="px-4 pt-2">
               <p className="text-xs font-bold mb-2" style={{ color: "var(--text-sub)" }}>
-                댓글 {comments.reduce((acc, c) => acc + 1 + (c.replies?.length ?? 0), 0)}개
+                {comments.reduce((acc, c) => acc + 1 + (c.replies?.length ?? 0), 0)} comments
               </p>
               {comments.length === 0 ? (
                 <p className="text-xs py-4 text-center" style={{ color: "var(--text-sub)" }}>
-                  첫 댓글을 남겨보세요.
+                  Be the first to comment.
                 </p>
               ) : (
                 comments.map((comment) => (
@@ -224,7 +224,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                 style={{ background: "var(--bg-page)", borderBottom: "1px solid var(--border)" }}
               >
                 <span className="text-xs" style={{ color: "var(--point)" }}>
-                  {replyTarget}에게 답글
+                  Reply to {replyTarget}
                 </span>
                 <button
                   type="button"
@@ -232,7 +232,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                   className="text-xs"
                   style={{ color: "var(--text-sub)", background: "none", border: "none", cursor: "pointer" }}
                 >
-                  취소
+                  cancel
                 </button>
               </div>
             )}
@@ -240,7 +240,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
               <input
                 ref={inputRef}
                 className="xp-input flex-1 text-sm"
-                placeholder={replyTarget ? `${replyTarget}에게 답글...` : "댓글을 입력하세요..."}
+                placeholder={replyTarget ? `Reply to ${replyTarget}...` : "Write a comment..."}
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
               />
@@ -250,7 +250,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                 disabled={submitting || !commentText.trim()}
                 style={{ color: "var(--point)", fontWeight: "bold" }}
               >
-                {submitting ? "..." : "전송"}
+                {submitting ? "..." : "send"}
               </button>
             </div>
           </form>
@@ -259,9 +259,9 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
 
       {showDeleteDialog && (
         <XpDialog
-          title="게시물 삭제"
-          message="게시물을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
-          confirmLabel={deleting ? "삭제 중..." : "삭제"}
+          title="Delete post"
+          message="Delete this post? This cannot be undone."
+          confirmLabel={deleting ? "Deleting..." : "Delete"}
           onConfirm={handleDeletePost}
           onCancel={() => setShowDeleteDialog(false)}
           danger

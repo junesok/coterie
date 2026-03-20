@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
-import { ko } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { NavBar } from "@/components/NavBar";
 
 const REASON_LABELS: Record<string, string> = {
-  SEXUAL_CONTENT: "선정적 콘텐츠",
-  HATE_SPEECH: "혐오 발언",
-  SPAM: "스팸",
-  VIOLENCE: "폭력적 콘텐츠",
-  PRIVACY_VIOLATION: "개인정보 침해",
-  OTHER: "기타",
+  SEXUAL_CONTENT: "Sexual content",
+  HATE_SPEECH: "Hate speech",
+  SPAM: "Spam",
+  VIOLENCE: "Violent content",
+  PRIVACY_VIOLATION: "Privacy violation",
+  OTHER: "Other",
 };
 
 type NotifType =
@@ -36,22 +36,22 @@ interface NotificationItem {
 }
 
 function getNotificationMessage(n: NotificationItem): string {
-  const actor = n.actor ? `@${n.actor.username ?? n.actor.name}` : "누군가";
+  const actor = n.actor ? `@${n.actor.username ?? n.actor.name}` : "someone";
   switch (n.type) {
     case "COMMENT":
-      return `${actor} 님이 댓글을 남겼어요.`;
+      return `${actor} left a comment.`;
     case "LIKE":
-      return `${actor} 님이 좋아요를 눌렀어요.`;
+      return `${actor} liked your post.`;
     case "MENTION_POST":
-      return `${actor} 님이 게시물에서 회원님을 언급했어요.`;
+      return `${actor} mentioned you in a post.`;
     case "MENTION_COMMENT":
-      return `${actor} 님이 댓글에서 회원님을 언급했어요.`;
+      return `${actor} mentioned you in a comment.`;
     case "ADMIN_DELETE_POST":
-      return `관리자에 의해 게시물이 삭제되었어요. 사유: ${REASON_LABELS[n.reason ?? ""] ?? n.reason}`;
+      return `Your post was removed by an admin. Reason: ${REASON_LABELS[n.reason ?? ""] ?? n.reason}`;
     case "ADMIN_DELETE_COMMENT":
-      return `관리자에 의해 댓글이 삭제되었어요. 사유: ${REASON_LABELS[n.reason ?? ""] ?? n.reason}`;
+      return `Your comment was removed by an admin. Reason: ${REASON_LABELS[n.reason ?? ""] ?? n.reason}`;
     default:
-      return "새로운 알림이 있어요.";
+      return "You have a new notification.";
   }
 }
 
@@ -94,7 +94,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <NavBar title="알림" showBack />
+      <NavBar title="notifications" showBack />
 
       <div className="p-3">
         {unreadCount > 0 && (
@@ -102,17 +102,17 @@ export default function NotificationsPage() {
             onClick={handleReadAll}
             className="xp-btn text-xs mb-3 w-full"
           >
-            전체 읽음 처리 ({unreadCount})
+            mark all as read ({unreadCount})
           </button>
         )}
 
         {loading ? (
           <p className="text-sm text-center mt-8" style={{ color: "var(--text-sub)" }}>
-            불러오는 중...
+            Loading...
           </p>
         ) : notifications.length === 0 ? (
           <p className="text-sm text-center mt-8" style={{ color: "var(--text-sub)" }}>
-            알림이 없어요.
+            No notifications.
           </p>
         ) : (
           <div className="flex flex-col gap-2">
@@ -139,7 +139,7 @@ export default function NotificationsPage() {
                     </span>
                   </div>
                   <span className="text-[11px] whitespace-nowrap" style={{ color: "var(--text-sub)" }}>
-                    {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: ko })}
+                    {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: enUS })}
                   </span>
                 </div>
               </button>

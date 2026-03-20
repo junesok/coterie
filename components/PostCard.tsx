@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { MessageSquare, Heart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { ko } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 interface PostCardProps {
   post: {
@@ -20,7 +20,7 @@ interface PostCardProps {
 export function PostCard({ post }: PostCardProps) {
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
     addSuffix: true,
-    locale: ko,
+    locale: enUS,
   });
 
   const authorLabel = post.author.username

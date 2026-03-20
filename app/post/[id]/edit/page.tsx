@@ -31,7 +31,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }, [id, session, router]);
 
   if (loading) return (
-    <p className="text-center mt-8 text-sm" style={{ color: "var(--text-sub)" }}>불러오는 중...</p>
+    <p className="text-center mt-8 text-sm" style={{ color: "var(--text-sub)" }}>Loading...</p>
   );
 
   if (initialContent === null) return null;

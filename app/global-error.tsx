@@ -15,7 +15,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   }, [error]);
 
   return (
-    <html lang="ko">
+    <html lang="en">
       <body
         style={{
           margin: 0,
@@ -45,11 +45,11 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             Windows
           </div>
           <p style={{ fontSize: 14, fontWeight: "bold", marginBottom: 16 }}>
-            잠깐 졸고 있었어요
+            something went wrong
           </p>
           <p style={{ fontSize: 12, color: "#ccccff", lineHeight: 1.7, marginBottom: 24 }}>
-            서버가 잠깐 졸았나봐요.<br />
-            새로고침 하거나 조금 뒤에 다시 시도해 주세요.
+            The server hiccuped.<br />
+            Try refreshing or come back in a moment.
           </p>
           <button
             onClick={reset}
@@ -63,7 +63,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               fontWeight: "bold",
             }}
           >
-            새로고침
+            refresh
           </button>
         </div>
       </body>

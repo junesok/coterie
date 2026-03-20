@@ -109,7 +109,7 @@ export function ImageUploader({
           onClick={() => inputRef.current?.click()}
         >
           <ImagePlus size={16} strokeWidth={1.5} />
-          {compressing ? "처리 중..." : `이미지 추가 (${totalCount}/${maxImages})`}
+          {compressing ? "Processing..." : `add image (${totalCount}/${maxImages})`}
         </button>
       )}
 

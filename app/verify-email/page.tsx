@@ -20,11 +20,11 @@ function VerifyEmailContent() {
     setResendMsg(null);
     try {
       await axios.post("/api/auth/resend-verification", { email });
-      setResendMsg({ text: "인증 메일을 재발송했습니다. 메일함을 확인해 주세요.", ok: true });
+      setResendMsg({ text: "Verification email sent. Please check your inbox.", ok: true });
     } catch (err) {
       const msg = axios.isAxiosError(err)
-        ? err.response?.data?.error ?? "재발송에 실패했습니다."
-        : "재발송에 실패했습니다.";
+        ? err.response?.data?.error ?? "Failed to resend."
+        : "Failed to resend.";
       setResendMsg({ text: msg, ok: false });
     } finally {
       setResending(false);
@@ -35,7 +35,7 @@ function VerifyEmailContent() {
     <div className="flex flex-col flex-1 justify-center items-center p-6">
       <div className="xp-window w-full max-w-[340px]">
         <div className="xp-titlebar">
-          <span>이메일 인증</span>
+          <span>email verification</span>
         </div>
         <div className="p-5 flex flex-col items-center gap-4 text-center">
 
@@ -45,12 +45,11 @@ function VerifyEmailContent() {
               <AlertTriangle size={32} strokeWidth={1.5} style={{ color: "var(--danger)" }} />
               <div>
                 <p className="text-sm font-bold mb-1" style={{ color: "var(--text-base)" }}>
-                  가입은 완료됐어요
+                  Registration complete
                 </p>
                 <p className="text-xs leading-relaxed" style={{ color: "var(--text-sub)" }}>
-                  그런데 인증 메일 발송에 실패했어요.<br />
-                  아래 버튼으로 재발송하거나,<br />
-                  관리자에게 문의해 주세요.
+                  But the verification email failed to send.<br />
+                  Try resending below or contact the admin.
                 </p>
               </div>
             </>
@@ -60,12 +59,12 @@ function VerifyEmailContent() {
               <Mail size={32} strokeWidth={1.5} style={{ color: "var(--point)" }} />
               <div>
                 <p className="text-sm mb-1" style={{ color: "var(--text-base)" }}>
-                  <strong>{email}</strong>으로<br />
-                  인증 메일을 발송했습니다.
+                  We sent a verification email to<br />
+                  <strong>{email}</strong>.
                 </p>
                 <p className="text-xs" style={{ color: "var(--text-sub)" }}>
-                  메일함을 확인하고 인증 링크를 클릭해 주세요.<br />
-                  링크는 24시간 동안 유효합니다.
+                  Check your inbox and click the verification link.<br />
+                  The link is valid for 24 hours.
                 </p>
               </div>
             </>
@@ -77,7 +76,7 @@ function VerifyEmailContent() {
           <div className="w-full flex flex-col gap-2">
             {!emailFailed && (
               <p className="text-xs" style={{ color: "var(--text-sub)" }}>
-                메일이 오지 않았나요? 스팸함도 확인해 보세요.
+                Didn&apos;t get it? Check your spam folder too.
               </p>
             )}
             <button
@@ -85,7 +84,7 @@ function VerifyEmailContent() {
               disabled={resending || !email}
               className="xp-btn text-xs w-full"
             >
-              {resending ? "재발송 중..." : "인증 메일 재발송"}
+              {resending ? "Sending..." : "Resend verification email"}
             </button>
             {resendMsg && (
               <p
@@ -99,7 +98,7 @@ function VerifyEmailContent() {
 
           <hr className="xp-hr w-full" />
           <Link href="/login" className="xp-btn text-sm">
-            로그인 페이지로
+            go to login
           </Link>
         </div>
       </div>

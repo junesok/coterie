@@ -46,7 +46,7 @@ function RegisterForm() {
 
     if (!USERNAME_REGEX.test(normalized)) {
       setUsernameStatus("invalid");
-      setUsernameMsg("3~20자, 영문 소문자·숫자·언더스코어만 사용 가능");
+      setUsernameMsg("3–20 chars, lowercase letters, numbers and _ only");
       return;
     }
 
@@ -55,10 +55,10 @@ function RegisterForm() {
       const res = await axios.get(`/api/auth/check-username?username=${encodeURIComponent(normalized)}`);
       if (res.data.available) {
         setUsernameStatus("available");
-        setUsernameMsg("사용 가능한 유저네임입니다.");
+        setUsernameMsg("Username is available.");
       } else {
         setUsernameStatus("taken");
-        setUsernameMsg(res.data.error ?? "이미 사용 중인 유저네임입니다.");
+        setUsernameMsg(res.data.error ?? "Username is already taken.");
       }
     } catch {
       setUsernameStatus("idle");
@@ -71,11 +71,11 @@ function RegisterForm() {
 
     // 제출 전 username 최종 검증
     if (!USERNAME_REGEX.test(form.username.toLowerCase())) {
-      setError("유저네임을 올바르게 입력해 주세요.");
+      setError("Please enter a valid username.");
       return;
     }
     if (usernameStatus === "taken") {
-      setError("이미 사용 중인 유저네임입니다.");
+      setError("Username is already taken.");
       return;
     }
 
@@ -95,9 +95,9 @@ function RegisterForm() {
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const data = err.response?.data;
-        setError(data?.error ?? "오류가 발생했습니다.");
+        setError(data?.error ?? "Something went wrong.");
       } else {
-        setError("오류가 발생했습니다.");
+        setError("Something went wrong.");
       }
     } finally {
       setLoading(false);
@@ -114,28 +114,28 @@ function RegisterForm() {
 
       {/* 사이트 소개 */}
       <div className="xp-window w-full max-w-[340px]">
-        <div className="xp-titlebar"><span>coterie에 오신 것을 환영합니다</span></div>
+        <div className="xp-titlebar"><span>welcome to coterie</span></div>
         <div className="p-4 flex flex-col gap-2.5 text-sm" style={{ color: "var(--text-base)", lineHeight: 1.7 }}>
-          <p>안녕하세요. 사이트 만든 사람입니다.<br />인스타그램 말고 우리끼리 잘 놀아봐요.</p>
+          <p>hey. i made this site.<br />let&apos;s hang out here instead of instagram.</p>
           <hr className="xp-hr" />
           <ul className="flex flex-col gap-1.5 text-xs" style={{ color: "var(--text-sub)" }}>
-            <li>— 저는 당신의 비밀번호를 알 수 없습니다.</li>
-            <li>— 도 넘은 게시물은 제가 삭제 처리할 수 있습니다.</li>
-            <li style={{ color: "var(--text-base)" }}>— 단, 웃기면 안 지웁니다.</li>
+            <li>— i cannot see your password.</li>
+            <li>— i can remove posts that cross the line.</li>
+            <li style={{ color: "var(--text-base)" }}>— unless it&apos;s funny.</li>
           </ul>
-          <p className="text-xs" style={{ color: "var(--text-sub)" }}>종종 놀러 오세요. 감사합니다, 땡큐.</p>
+          <p className="text-xs" style={{ color: "var(--text-sub)" }}>come back often. thanks.</p>
         </div>
       </div>
 
       <div className="xp-window w-full max-w-[340px]">
         <div className="xp-titlebar">
-          <span>coterie — 가입</span>
+          <span>coterie — sign up</span>
         </div>
 
         <div className="p-5">
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div>
-              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>이름</label>
+              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>Name</label>
               <input
                 type="text"
                 name="name"
@@ -147,7 +147,7 @@ function RegisterForm() {
             </div>
             <div>
               <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>
-                유저네임 <span style={{ color: "var(--text-sub)", fontWeight: "normal" }}>(로그인에 사용)</span>
+                Username <span style={{ color: "var(--text-sub)", fontWeight: "normal" }}>(used to sign in)</span>
               </label>
               <input
                 type="text"
@@ -162,12 +162,12 @@ function RegisterForm() {
               />
               {usernameStatus !== "idle" && usernameMsg && (
                 <p className="text-[11px] mt-0.5" style={{ color: usernameColor }}>
-                  {usernameStatus === "checking" ? "확인 중..." : usernameMsg}
+                  {usernameStatus === "checking" ? "Checking..." : usernameMsg}
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>이메일 (인증용)</label>
+              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>Email</label>
               <input
                 type="email"
                 name="email"
@@ -179,7 +179,7 @@ function RegisterForm() {
               />
             </div>
             <div>
-              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>비밀번호 (8자 이상)</label>
+              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>Password <span style={{ fontWeight: "normal" }}>(8+ characters)</span></label>
               <input
                 type="password"
                 name="password"
@@ -193,7 +193,7 @@ function RegisterForm() {
             </div>
             <div>
               <label className="block text-xs mb-1" style={{ color: "var(--point)", fontWeight: "bold" }}>
-                초대 코드
+                Invite code
               </label>
               <input
                 type="text"
@@ -216,14 +216,14 @@ function RegisterForm() {
               disabled={loading || usernameStatus === "taken" || usernameStatus === "invalid"}
               className="xp-btn w-full mt-1"
             >
-              {loading ? "처리 중..." : "가입하기"}
+              {loading ? "Processing..." : "Sign up"}
             </button>
           </form>
 
           <hr className="xp-hr my-4" />
           <p className="text-xs text-center" style={{ color: "var(--text-sub)" }}>
-            이미 계정이 있으신가요?{" "}
-            <Link href="/login" style={{ color: "var(--point)" }}>로그인</Link>
+            Already have an account?{" "}
+            <Link href="/login" style={{ color: "var(--point)" }}>Sign in</Link>
           </p>
         </div>
       </div>

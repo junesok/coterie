@@ -13,8 +13,8 @@ interface XpDialogProps {
 export function XpDialog({
   title,
   message,
-  confirmLabel = "확인",
-  cancelLabel = "취소",
+  confirmLabel = "confirm",
+  cancelLabel = "cancel",
   onConfirm,
   onCancel,
   danger = false,

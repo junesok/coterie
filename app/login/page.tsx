@@ -19,10 +19,10 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const errorMessages: Record<string, string> = {
-    "invalid-token": "유효하지 않은 인증 링크입니다.",
-    "already-verified": "이미 인증된 계정입니다.",
-    "token-expired": "인증 링크가 만료되었습니다. 다시 가입해 주세요.",
-    "server-error": "서버 오류가 발생했습니다.",
+    "invalid-token": "Invalid verification link.",
+    "already-verified": "This account is already verified.",
+    "token-expired": "Verification link has expired. Please sign up again.",
+    "server-error": "A server error occurred.",
   };
 
   async function handleSubmit(e: React.FormEvent) {
@@ -60,12 +60,12 @@ function LoginForm() {
         <div className="p-5">
           {registered && (
             <div className="mb-4 p-2 border text-sm" style={{ borderColor: "var(--point)", color: "var(--point)" }}>
-              가입 완료! 로그인해 주세요.
+              Account created! Please sign in.
             </div>
           )}
           {verified && (
             <div className="mb-4 p-2 border text-sm" style={{ borderColor: "var(--point)", color: "var(--point)" }}>
-              이메일 인증 완료! 로그인해 주세요.
+              Email verified! Please sign in.
             </div>
           )}
           {errorParam && errorMessages[errorParam] && (
@@ -76,7 +76,7 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div>
-              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>유저네임</label>
+              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>Username</label>
               <input
                 type="text"
                 className="xp-input"
@@ -89,7 +89,7 @@ function LoginForm() {
               />
             </div>
             <div>
-              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>비밀번호</label>
+              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>Password</label>
               <input
                 type="password"
                 className="xp-input"
@@ -110,15 +110,15 @@ function LoginForm() {
               className="xp-btn w-full mt-1"
               style={{ color: "var(--text-base)" }}
             >
-              {loading ? "로그인 중..." : "로그인"}
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
           <hr className="xp-hr my-4" />
           <p className="text-xs text-center" style={{ color: "var(--text-sub)" }}>
-            초대 코드가 있으신가요?{" "}
+            Have an invite code?{" "}
             <Link href="/register" style={{ color: "var(--point)" }}>
-              가입하기
+              Sign up
             </Link>
           </p>
         </div>

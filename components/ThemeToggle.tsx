@@ -26,10 +26,10 @@ export function ThemeToggle() {
     <button
       className="xp-btn flex items-center gap-1.5 text-sm"
       onClick={toggle}
-      title={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
+      title={isDark ? "switch to light mode" : "switch to dark mode"}
     >
       {isDark ? <Sun size={14} strokeWidth={1.5} /> : <Moon size={14} strokeWidth={1.5} />}
-      {isDark ? "라이트" : "다크"}
+      {isDark ? "light" : "dark"}
     </button>
   );
 }

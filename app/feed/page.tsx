@@ -64,11 +64,11 @@ export default function FeedPage() {
       <div className="flex-1 overflow-y-auto py-3">
         {loading && posts.length === 0 ? (
           <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>
-            불러오는 중...
+            Loading...
           </p>
         ) : posts.length === 0 ? (
           <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>
-            아직 게시물이 없습니다.
+            No posts yet.
           </p>
         ) : (
           <>
@@ -81,7 +81,7 @@ export default function FeedPage() {
                 disabled={loading}
                 className="xp-btn w-[calc(100%-24px)] mx-3 my-2 text-sm"
               >
-                {loading ? "불러오는 중..." : "더 보기"}
+                {loading ? "Loading..." : "Load more"}
               </button>
             )}
           </>
@@ -99,7 +99,7 @@ export default function FeedPage() {
         }}
       >
         <PenLine size={16} strokeWidth={1.5} />
-        새 글
+        New post
       </button>
     </div>
   );

@@ -50,9 +50,9 @@ export default function SettingsPage() {
     setNameMsg(null);
     try {
       await axios.put("/api/users/me", { name });
-      setNameMsg({ text: "이름이 변경되었습니다.", ok: true });
+      setNameMsg({ text: "Name updated.", ok: true });
     } catch (err) {
-      const msg = axios.isAxiosError(err) ? err.response?.data?.error : "오류가 발생했습니다.";
+      const msg = axios.isAxiosError(err) ? err.response?.data?.error : "Something went wrong.";
       setNameMsg({ text: msg, ok: false });
     } finally {
       setLoading(false);
@@ -65,11 +65,11 @@ export default function SettingsPage() {
     setPwMsg(null);
     try {
       await axios.put("/api/users/me", { currentPassword: currentPw, newPassword: newPw });
-      setPwMsg({ text: "비밀번호가 변경되었습니다.", ok: true });
+      setPwMsg({ text: "Password updated.", ok: true });
       setCurrentPw("");
       setNewPw("");
     } catch (err) {
-      const msg = axios.isAxiosError(err) ? err.response?.data?.error : "오류가 발생했습니다.";
+      const msg = axios.isAxiosError(err) ? err.response?.data?.error : "Something went wrong.";
       setPwMsg({ text: msg, ok: false });
     } finally {
       setLoading(false);
@@ -83,15 +83,15 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <NavBar title="설정" showBack />
+      <NavBar title="settings" showBack />
 
       <div className="p-4 flex flex-col gap-4">
 
         {/* 테마 */}
         <div className="xp-window">
-          <div className="xp-titlebar"><span>테마</span></div>
+          <div className="xp-titlebar"><span>theme</span></div>
           <div className="p-3 flex items-center justify-between">
-            <span className="text-sm" style={{ color: "var(--text-base)" }}>라이트 / 다크 모드</span>
+            <span className="text-sm" style={{ color: "var(--text-base)" }}>light / dark mode</span>
             <ThemeToggle />
           </div>
         </div>
@@ -101,14 +101,14 @@ export default function SettingsPage() {
           <div className="xp-titlebar">
             <div className="flex items-center gap-1.5">
               <Key size={12} strokeWidth={1.5} />
-              <span>내 초대 코드</span>
+              <span>my invite codes</span>
             </div>
           </div>
           <div className="flex flex-col">
             {codesLoading ? (
-              <p className="p-3 text-xs" style={{ color: "var(--text-sub)" }}>불러오는 중...</p>
+              <p className="p-3 text-xs" style={{ color: "var(--text-sub)" }}>Loading...</p>
             ) : codes.length === 0 ? (
-              <p className="p-3 text-xs" style={{ color: "var(--text-sub)" }}>발급된 초대 코드가 없습니다.</p>
+              <p className="p-3 text-xs" style={{ color: "var(--text-sub)" }}>No invite codes yet.</p>
             ) : (
               codes.map((code, i) => (
                 <div
@@ -129,11 +129,11 @@ export default function SettingsPage() {
                     </span>
                     {code.isUsed && code.usedBy && (
                       <span className="text-[10px]" style={{ color: "var(--text-sub)" }}>
-                        사용됨 — {code.usedBy.name}
+                        used by {code.usedBy.name}
                       </span>
                     )}
                     {!code.isUsed && (
-                      <span className="text-[10px]" style={{ color: "var(--point)" }}>미사용</span>
+                      <span className="text-[10px]" style={{ color: "var(--point)" }}>unused</span>
                     )}
                   </div>
                   <button
@@ -142,7 +142,7 @@ export default function SettingsPage() {
                     disabled={code.isUsed}
                   >
                     <Copy size={11} strokeWidth={1.5} />
-                    {copied === code.code ? "복사됨!" : "링크 복사"}
+                    {copied === code.code ? "copied!" : "copy link"}
                   </button>
                 </div>
               ))
@@ -155,7 +155,7 @@ export default function SettingsPage() {
           <div className="xp-titlebar">
             <div className="flex items-center gap-1.5">
               <User size={12} strokeWidth={1.5} />
-              <span>이름 변경</span>
+              <span>change name</span>
             </div>
           </div>
           <form onSubmit={handleNameChange} className="p-3 flex flex-col gap-2">
@@ -163,7 +163,7 @@ export default function SettingsPage() {
               className="xp-input text-sm"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="새 이름"
+              placeholder="new name"
             />
             {nameMsg && (
               <p className="text-xs" style={{ color: nameMsg.ok ? "var(--point)" : "var(--danger)" }}>
@@ -171,21 +171,21 @@ export default function SettingsPage() {
               </p>
             )}
             <button type="submit" className="xp-btn text-sm self-end" disabled={loading}>
-              저장
+              save
             </button>
           </form>
         </div>
 
         {/* 비밀번호 변경 */}
         <div className="xp-window">
-          <div className="xp-titlebar"><span>비밀번호 변경</span></div>
+          <div className="xp-titlebar"><span>change password</span></div>
           <form onSubmit={handlePasswordChange} className="p-3 flex flex-col gap-2">
             <input
               type="password"
               className="xp-input text-sm"
               value={currentPw}
               onChange={(e) => setCurrentPw(e.target.value)}
-              placeholder="현재 비밀번호"
+              placeholder="current password"
               autoComplete="current-password"
             />
             <input
@@ -193,7 +193,7 @@ export default function SettingsPage() {
               className="xp-input text-sm"
               value={newPw}
               onChange={(e) => setNewPw(e.target.value)}
-              placeholder="새 비밀번호 (8자 이상)"
+              placeholder="new password (8+ characters)"
               minLength={8}
               autoComplete="new-password"
             />
@@ -203,7 +203,7 @@ export default function SettingsPage() {
               </p>
             )}
             <button type="submit" className="xp-btn text-sm self-end" disabled={loading}>
-              변경
+              update
             </button>
           </form>
         </div>
@@ -214,7 +214,7 @@ export default function SettingsPage() {
           style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
           onClick={handleSignOut}
         >
-          로그아웃
+          sign out
         </button>
 
         <p className="text-xs text-center" style={{ color: "var(--text-sub)" }}>
@@ -223,16 +223,16 @@ export default function SettingsPage() {
 
         {/* 사이트 소개 */}
         <div className="xp-window mt-2">
-          <div className="xp-titlebar"><span>만든 사람의 말</span></div>
+          <div className="xp-titlebar"><span>from the creator</span></div>
           <div className="p-4 flex flex-col gap-2.5 text-sm" style={{ color: "var(--text-base)", lineHeight: 1.7 }}>
-            <p>안녕하세요. 사이트 만든 사람입니다.<br />인스타그램 말고 우리끼리 잘 놀아봐요.</p>
+            <p>hey. i made this site.<br />let&apos;s hang out here instead of instagram.</p>
             <hr className="xp-hr" />
             <ul className="flex flex-col gap-1.5 text-xs" style={{ color: "var(--text-sub)" }}>
-              <li>— 저는 당신의 비밀번호를 알 수 없습니다.</li>
-              <li>— 도 넘은 게시물은 제가 삭제 처리할 수 있습니다.</li>
-              <li style={{ color: "var(--text-base)" }}>— 단, 웃기면 안 지웁니다.</li>
+              <li>— i cannot see your password.</li>
+              <li>— i can remove posts that cross the line.</li>
+              <li style={{ color: "var(--text-base)" }}>— unless it&apos;s funny.</li>
             </ul>
-            <p className="text-xs" style={{ color: "var(--text-sub)" }}>종종 놀러 오세요. 감사합니다, 땡큐.</p>
+            <p className="text-xs" style={{ color: "var(--text-sub)" }}>come back often. thanks.</p>
           </div>
         </div>
       </div>

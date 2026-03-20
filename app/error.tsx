@@ -29,11 +29,11 @@ export default function Error({ error, reset }: ErrorProps) {
         </div>
 
         <p className="text-sm font-bold mb-4">
-          잠깐 졸고 있었어요
+          something went wrong
         </p>
         <p className="text-xs leading-relaxed mb-6" style={{ color: "#ccccff" }}>
-          서버가 잠깐 졸았나봐요.<br />
-          새로고침 하거나 조금 뒤에 다시 시도해 주세요.
+          The server hiccuped.<br />
+          Try refreshing or come back in a moment.
         </p>
 
         <div className="text-xs mb-6" style={{ color: "#8888cc", fontFamily: "monospace" }}>
@@ -50,7 +50,7 @@ export default function Error({ error, reset }: ErrorProps) {
             cursor: "pointer",
           }}
         >
-          새로고침
+          refresh
         </button>
       </div>
     </div>

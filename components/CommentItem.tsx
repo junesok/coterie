@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { formatDistanceToNow } from "date-fns";
-import { ko } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Pencil, Trash2 } from "lucide-react";
 import axios from "axios";
 import { XpDialog } from "@/components/XpDialog";
@@ -34,7 +34,7 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
   const [loading, setLoading] = useState(false);
 
   const isOwner = session?.user?.id === comment.author.id;
-  const timeAgo = formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: ko });
+  const timeAgo = formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: enUS });
 
   async function handleEditSave() {
     if (!editContent.trim()) return;
@@ -65,7 +65,7 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
     >
       {comment.isDeleted ? (
         // 소프트 삭제된 댓글
-        <p className="text-xs italic" style={{ color: "var(--text-sub)" }}>삭제된 댓글입니다.</p>
+        <p className="text-xs italic" style={{ color: "var(--text-sub)" }}>This comment was deleted.</p>
       ) : editing ? (
         // 인라인 편집 모드
         <div className="flex flex-col gap-1">
@@ -77,9 +77,9 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
           />
           <div className="flex gap-1">
             <button className="xp-btn text-xs py-0.5" onClick={handleEditSave} disabled={loading}>
-              {loading ? "저장 중..." : "저장"}
+              {loading ? "saving..." : "save"}
             </button>
-            <button className="xp-btn text-xs py-0.5" onClick={() => setEditing(false)}>취소</button>
+            <button className="xp-btn text-xs py-0.5" onClick={() => setEditing(false)}>cancel</button>
           </div>
         </div>
       ) : (
@@ -92,7 +92,7 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
             <div className="flex items-center gap-1">
               <span className="text-xs" style={{ color: "var(--text-sub)" }}>{timeAgo}</span>
               {comment.isEdited && (
-                <span className="text-[10px]" style={{ color: "var(--text-sub)" }}>(수정됨)</span>
+                <span className="text-[10px]" style={{ color: "var(--text-sub)" }}>(edited)</span>
               )}
               {isOwner && (
                 <div className="flex gap-0.5 ml-1">
@@ -121,7 +121,7 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
               className="text-[11px] mt-1"
               style={{ color: "var(--point)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
             >
-              답글
+              reply
             </button>
           )}
         </div>
@@ -140,9 +140,9 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
 
       {showDeleteDialog && (
         <XpDialog
-          title="댓글 삭제"
-          message="댓글을 삭제하시겠습니까?"
-          confirmLabel={loading ? "삭제 중..." : "삭제"}
+          title="Delete comment"
+          message="Delete this comment?"
+          confirmLabel={loading ? "Deleting..." : "Delete"}
           onConfirm={handleDelete}
           onCancel={() => setShowDeleteDialog(false)}
           danger
