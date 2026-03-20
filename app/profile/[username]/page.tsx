@@ -131,7 +131,7 @@ export default function ProfilePage() {
             <button
               className="text-[10px] text-white/80"
               style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "1px 8px", cursor: "pointer" }}
-              onClick={() => router.push("/settings")}
+              onClick={() => router.push("/profile/edit")}
             >
               edit
             </button>

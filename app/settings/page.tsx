@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Key, User, Copy } from "lucide-react";
+import { Key, Copy } from "lucide-react";
 import axios from "axios";
 import { NavBar } from "@/components/NavBar";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -20,10 +20,8 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const router = useRouter();
 
-  const [name, setName] = useState(session?.user?.name ?? "");
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
-  const [nameMsg, setNameMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -42,22 +40,6 @@ export default function SettingsPage() {
     navigator.clipboard.writeText(link);
     setCopied(code);
     setTimeout(() => setCopied(null), 2000);
-  }
-
-  async function handleNameChange(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setLoading(true);
-    setNameMsg(null);
-    try {
-      await axios.put("/api/users/me", { name });
-      setNameMsg({ text: "Name updated.", ok: true });
-    } catch (err) {
-      const msg = axios.isAxiosError(err) ? err.response?.data?.error : "Something went wrong.";
-      setNameMsg({ text: msg, ok: false });
-    } finally {
-      setLoading(false);
-    }
   }
 
   async function handlePasswordChange(e: React.FormEvent) {
@@ -149,32 +131,6 @@ export default function SettingsPage() {
               ))
             )}
           </div>
-        </div>
-
-        {/* 이름 변경 */}
-        <div className="xp-window">
-          <div className="xp-titlebar">
-            <div className="flex items-center gap-1.5">
-              <User size={12} strokeWidth={1.5} />
-              <span>change name</span>
-            </div>
-          </div>
-          <form onSubmit={handleNameChange} className="p-3 flex flex-col gap-2">
-            <input
-              className="xp-input text-sm"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="new name"
-            />
-            {nameMsg && (
-              <p className="text-xs" style={{ color: nameMsg.ok ? "var(--point)" : "var(--danger)" }}>
-                {nameMsg.text}
-              </p>
-            )}
-            <button type="submit" className="xp-btn text-sm self-end" disabled={loading}>
-              save
-            </button>
-          </form>
         </div>
 
         {/* 비밀번호 변경 */}

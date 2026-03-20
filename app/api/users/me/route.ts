@@ -58,7 +58,10 @@ export async function GET() {
   }
 }
 
-// PUT /api/users/me — 이름 / 비밀번호 / 테마 / avatarUrl 변경
+const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
+const RESERVED_USERNAMES = ["coterie_admin"];
+
+// PUT /api/users/me — 이름 / 유저네임 / 비밀번호 / 테마 / avatarUrl 변경
 export async function PUT(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -66,9 +69,10 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });
     }
 
-    const { name, currentPassword, newPassword, theme, avatarUrl } = await req.json();
+    const { name, username, currentPassword, newPassword, theme, avatarUrl } = await req.json();
     const updateData: {
       name?: string;
+      username?: string;
       passwordHash?: string;
       theme?: string;
       avatarUrl?: string | null;
@@ -79,6 +83,34 @@ export async function PUT(req: NextRequest) {
       updateData.name = name.trim();
     }
 
+    // 유저네임 변경
+    if (username !== undefined && username !== null) {
+      const normalized = username.toLowerCase().trim();
+      if (!USERNAME_REGEX.test(normalized)) {
+        return NextResponse.json(
+          { success: false, error: "Username must be 3–20 chars: lowercase letters, numbers, underscores." },
+          { status: 400 }
+        );
+      }
+      if (RESERVED_USERNAMES.includes(normalized)) {
+        return NextResponse.json(
+          { success: false, error: "That username is reserved." },
+          { status: 400 }
+        );
+      }
+      // 중복 확인 (자기 자신 제외)
+      const existing = await prisma.user.findFirst({
+        where: { username: normalized, NOT: { id: session.user.id } },
+      });
+      if (existing) {
+        return NextResponse.json(
+          { success: false, error: "Username already taken." },
+          { status: 409 }
+        );
+      }
+      updateData.username = normalized;
+    }
+
     // 테마 변경
     if (theme === "light" || theme === "dark") {
       updateData.theme = theme;
@@ -86,17 +118,15 @@ export async function PUT(req: NextRequest) {
 
     // 프로필 이미지 변경
     if (avatarUrl !== undefined) {
-      // 기존 이미지가 있으면 Cloudinary에서 삭제
-      if (avatarUrl !== null) {
-        const current = await prisma.user.findUnique({
-          where: { id: session.user.id },
-          select: { avatarUrl: true },
-        });
-        if (current?.avatarUrl && current.avatarUrl !== avatarUrl) {
-          await deleteCloudinaryImage(current.avatarUrl);
-        }
+      // 기존 이미지가 Cloudinary에 있으면 삭제
+      const current = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { avatarUrl: true },
+      });
+      if (current?.avatarUrl && current.avatarUrl !== avatarUrl) {
+        await deleteCloudinaryImage(current.avatarUrl);
       }
-      updateData.avatarUrl = avatarUrl;
+      updateData.avatarUrl = avatarUrl; // null이면 기본 이미지로 되돌아감
     }
 
     // 비밀번호 변경
