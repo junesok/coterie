@@ -99,17 +99,15 @@ export function NavBar({
         {/* 오른쪽 — 아이콘 버튼들 */}
         <div className="flex items-center gap-1.5 z-10">
           {rightSlot}
-          {/* 내 프로필 버튼 */}
-          {username && (
-            <button
-              onClick={() => router.push(`/profile/${username}`)}
-              className="relative p-1.5 text-white"
-              style={{ background: "transparent", border: "none", cursor: "pointer" }}
-              title="my profile"
-            >
-              <CircleUser size={24} strokeWidth={1.5} />
-            </button>
-          )}
+          {/* 내 프로필 버튼 — username 없으면 /profile/me fallback */}
+          <button
+            onClick={() => router.push(username ? `/profile/${username}` : "/profile/me")}
+            className="relative p-1.5 text-white"
+            style={{ background: "transparent", border: "none", cursor: "pointer" }}
+            title="my profile"
+          >
+            <CircleUser size={24} strokeWidth={1.5} />
+          </button>
           {/* 관리자 버튼 */}
           {isAdmin && (
             <button
