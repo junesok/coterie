@@ -8,6 +8,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import axios from "axios";
 import { XpDialog } from "@/components/XpDialog";
 import { Avatar } from "@/components/Avatar";
+import { MentionText } from "@/components/MentionText";
 
 export interface CommentData {
   id: string;
@@ -125,7 +126,9 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
               )}
             </div>
           </div>
-          <p className="text-sm" style={{ color: "var(--text-base)" }}>{comment.content}</p>
+          <p className="text-sm" style={{ color: "var(--text-base)" }}>
+            <MentionText text={comment.content ?? ""} />
+          </p>
 
           {/* 답글 달기 버튼 (최상위 댓글에만) */}
           {!isReply && onReplyStart && (

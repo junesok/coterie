@@ -5,6 +5,7 @@ import { MessageSquare, Heart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { Avatar } from "@/components/Avatar";
+import { MentionText } from "@/components/MentionText";
 
 interface PostCardProps {
   post: {
@@ -103,7 +104,7 @@ export function PostCard({ post }: PostCardProps) {
               lineHeight: "1.5",
             }}
           >
-            {post.content}
+            <MentionText text={post.content} />
           </p>
         </div>
 

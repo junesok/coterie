@@ -14,6 +14,7 @@ import { ImageCarousel } from "@/components/ImageCarousel";
 import { XpDialog } from "@/components/XpDialog";
 import { CommentItem, type CommentData } from "@/components/CommentItem";
 import { MentionInput } from "@/components/MentionInput";
+import { MentionText } from "@/components/MentionText";
 
 interface Post {
   id: string;
@@ -206,8 +207,8 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                   </div>
                 )}
               </div>
-              <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-base)" }}>
-                {post.content}
+              <p className="text-sm" style={{ color: "var(--text-base)" }}>
+                <MentionText text={post.content} />
               </p>
 
               {/* 좋아요 버튼 */}
