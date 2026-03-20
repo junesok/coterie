@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createMentionNotifications } from "@/lib/notifications";
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 5;
 
 // GET /api/posts?page=1 — 피드 목록 (최신순)
 export async function GET(req: NextRequest) {
