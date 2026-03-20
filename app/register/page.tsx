@@ -4,6 +4,7 @@ import { useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
+import { PasswordStrengthBar } from "@/components/PasswordStrengthBar";
 
 // username 유효성 정규식
 const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
@@ -191,6 +192,7 @@ function RegisterForm() {
                 minLength={8}
                 autoComplete="new-password"
               />
+              <PasswordStrengthBar password={form.password} />
             </div>
             <div>
               <label className="block text-xs mb-1" style={{ color: "var(--point)", fontWeight: "bold" }}>

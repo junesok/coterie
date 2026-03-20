@@ -7,6 +7,7 @@ import { Key, User, Copy } from "lucide-react";
 import axios from "axios";
 import { NavBar } from "@/components/NavBar";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PasswordStrengthBar } from "@/components/PasswordStrengthBar";
 
 interface InviteCode {
   id: string;
@@ -197,6 +198,7 @@ export default function SettingsPage() {
               minLength={8}
               autoComplete="new-password"
             />
+            <PasswordStrengthBar password={newPw} />
             {pwMsg && (
               <p className="text-xs" style={{ color: pwMsg.ok ? "var(--point)" : "var(--danger)" }}>
                 {pwMsg.text}

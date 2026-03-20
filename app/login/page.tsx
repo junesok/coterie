@@ -11,6 +11,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const verified = searchParams.get("verified");
   const registered = searchParams.get("registered");
+  const reset = searchParams.get("reset");
   const errorParam = searchParams.get("error");
 
   const [username, setUsername] = useState("");
@@ -61,6 +62,11 @@ function LoginForm() {
           {registered && (
             <div className="mb-4 p-2 border text-sm" style={{ borderColor: "var(--point)", color: "var(--point)" }}>
               Account created! Please sign in.
+            </div>
+          )}
+          {reset && (
+            <div className="mb-4 p-2 border text-sm" style={{ borderColor: "var(--point)", color: "var(--point)" }}>
+              Password updated! Please sign in.
             </div>
           )}
           {verified && (
@@ -115,12 +121,15 @@ function LoginForm() {
           </form>
 
           <hr className="xp-hr my-4" />
-          <p className="text-xs text-center" style={{ color: "var(--text-sub)" }}>
-            Have an invite code?{" "}
-            <Link href="/register" style={{ color: "var(--point)" }}>
-              Sign up
+          <div className="flex flex-col gap-1 items-center">
+            <p className="text-xs text-center" style={{ color: "var(--text-sub)" }}>
+              Have an invite code?{" "}
+              <Link href="/register" style={{ color: "var(--point)" }}>Sign up</Link>
+            </p>
+            <Link href="/forgot-password" className="text-xs" style={{ color: "var(--text-sub)" }}>
+              Forgot password?
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </div>

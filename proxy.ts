@@ -2,7 +2,7 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 // 인증 없이 접근 가능한 경로
-const PUBLIC_PATHS = ["/login", "/register"];
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
 
 // Next.js 16: middleware → proxy (함수명도 proxy로 변경)
 export const proxy = withAuth(
