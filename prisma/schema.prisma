@@ -16,6 +16,7 @@ model User {
   isVerified        Boolean        @default(false)
   isAdmin           Boolean        @default(false)
   theme             String         @default("light")
+  avatarUrl         String?        // Cloudinary URL, null이면 기본 아바타
   invitedById       String?
   invitedBy         User?          @relation("InvitedBy", fields: [invitedById], references: [id])
   invitees          User[]         @relation("InvitedBy")

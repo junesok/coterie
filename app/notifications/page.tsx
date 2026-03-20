@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
@@ -35,23 +36,31 @@ interface NotificationItem {
   actor: { id: string; username: string | null; name: string } | null;
 }
 
-function getNotificationMessage(n: NotificationItem): string {
-  const actor = n.actor ? `@${n.actor.username ?? n.actor.name}` : "someone";
+function getNotificationMessage(n: NotificationItem): React.ReactNode {
+  const actorLabel = n.actor ? `@${n.actor.username ?? n.actor.name}` : "someone";
+  const actorLink = n.actor?.username ? (
+    <a
+      href={`/profile/${n.actor.username}`}
+      onClick={(e) => e.stopPropagation()}
+      style={{ color: "var(--point)", fontWeight: "bold", textDecoration: "none" }}
+    >
+      {actorLabel}
+    </a>
+  ) : (
+    <span style={{ fontWeight: "bold" }}>{actorLabel}</span>
+  );
+
   switch (n.type) {
-    case "COMMENT":
-      return `${actor} left a comment.`;
-    case "LIKE":
-      return `${actor} liked your post.`;
-    case "MENTION_POST":
-      return `${actor} mentioned you in a post.`;
-    case "MENTION_COMMENT":
-      return `${actor} mentioned you in a comment.`;
+    case "COMMENT":      return <>{actorLink} left a comment.</>;
+    case "LIKE":         return <>{actorLink} liked your post.</>;
+    case "MENTION_POST": return <>{actorLink} mentioned you in a post.</>;
+    case "MENTION_COMMENT": return <>{actorLink} mentioned you in a comment.</>;
     case "ADMIN_DELETE_POST":
-      return `Your post was removed by an admin. Reason: ${REASON_LABELS[n.reason ?? ""] ?? n.reason}`;
+      return <>Your post was removed by an admin. Reason: {REASON_LABELS[n.reason ?? ""] ?? n.reason}</>;
     case "ADMIN_DELETE_COMMENT":
-      return `Your comment was removed by an admin. Reason: ${REASON_LABELS[n.reason ?? ""] ?? n.reason}`;
+      return <>Your comment was removed by an admin. Reason: {REASON_LABELS[n.reason ?? ""] ?? n.reason}</>;
     default:
-      return "You have a new notification.";
+      return <>You have a new notification.</>;
   }
 }
 

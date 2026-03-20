@@ -30,9 +30,18 @@ export function PostCard({ post }: PostCardProps) {
   return (
     <Link href={`/post/${post.id}`} className="block mb-2 mx-2">
       <div className="xp-window transition-all hover:brightness-95">
-        {/* XP 타이틀바 — 작성자 + 작성 시간 */}
-        <div className="xp-titlebar py-1 px-2.5">
-          <span className="text-xs font-bold text-white truncate">{authorLabel}</span>
+        {/* XP 타이틀바 — 작성자(클릭 시 프로필) + 작성 시간 */}
+        <div className="xp-titlebar py-1 px-2.5 flex items-center justify-between">
+          <span
+            className="text-xs font-bold text-white truncate"
+            onClick={(e) => {
+              e.preventDefault();
+              if (post.author.username) window.location.href = `/profile/${post.author.username}`;
+            }}
+            style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}
+          >
+            {authorLabel}
+          </span>
           <span className="text-[10px] ml-2 shrink-0" style={{ color: "rgba(255,255,255,0.8)" }}>
             {timeAgo}
           </span>

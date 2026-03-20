@@ -86,9 +86,14 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
         // 일반 댓글
         <div>
           <div className="flex items-baseline justify-between mb-0.5">
-            <span className="text-xs font-bold" style={{ color: "var(--text-base)" }}>
+            <a
+              href={comment.author.username ? `/profile/${comment.author.username}` : undefined}
+              className="text-xs font-bold"
+              style={{ color: "var(--text-base)", textDecoration: "none" }}
+              onClick={(e) => e.stopPropagation()}
+            >
               {comment.author.username ? `@${comment.author.username}` : comment.author.name}
-            </span>
+            </a>
             <div className="flex items-center gap-1">
               <span className="text-xs" style={{ color: "var(--text-sub)" }}>{timeAgo}</span>
               {comment.isEdited && (
