@@ -15,6 +15,7 @@ model User {
   passwordHash      String
   isVerified        Boolean        @default(false)
   isAdmin           Boolean        @default(false)
+  theme             String         @default("light")
   invitedById       String?
   invitedBy         User?          @relation("InvitedBy", fields: [invitedById], references: [id])
   invitees          User[]         @relation("InvitedBy")

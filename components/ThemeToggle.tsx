@@ -3,6 +3,7 @@
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -14,10 +15,17 @@ export function ThemeToggle() {
 
   const isDark = theme === "dark";
 
+  function toggle() {
+    const next = isDark ? "light" : "dark";
+    setTheme(next);
+    // DB에 저장 (비동기, 실패 무시)
+    axios.put("/api/users/me", { theme: next }).catch(() => {});
+  }
+
   return (
     <button
       className="xp-btn flex items-center gap-1.5 text-sm"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={toggle}
       title={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
     >
       {isDark ? <Sun size={14} strokeWidth={1.5} /> : <Moon size={14} strokeWidth={1.5} />}
