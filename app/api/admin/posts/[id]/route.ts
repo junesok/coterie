@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
 import { ModerationReason } from "@/app/generated/prisma/client";
 import { createAdminDeleteNotification } from "@/lib/notifications";
+import { deleteImagesByUrls } from "@/lib/cloudinary";
 
 // DELETE /api/admin/posts/[id] — 관리자 게시물 삭제 (사유 포함)
 export async function DELETE(
@@ -22,7 +23,10 @@ export async function DELETE(
     );
   }
 
-  const post = await prisma.post.findUnique({ where: { id } });
+  const post = await prisma.post.findUnique({
+    where: { id },
+    include: { images: { select: { url: true } } },
+  });
   if (!post) {
     return NextResponse.json(
       { success: false, error: "게시물을 찾을 수 없습니다." },
@@ -42,6 +46,12 @@ export async function DELETE(
       },
     }),
   ]);
+
+  // Cloudinary 이미지 삭제 (비동기, 실패 무시)
+  const imageUrls = post.images.map((img) => img.url);
+  if (imageUrls.length > 0) {
+    deleteImagesByUrls(imageUrls).catch(() => {});
+  }
 
   // 게시물 작성자에게 알림 (비동기)
   createAdminDeleteNotification(

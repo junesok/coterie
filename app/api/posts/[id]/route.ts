@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { deleteImagesByUrls } from "@/lib/cloudinary";
 
 // GET /api/posts/[id] — 게시물 상세
 export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]">) {
@@ -63,7 +64,16 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/posts/[id]">
       return NextResponse.json({ success: false, error: "내용을 입력해 주세요." }, { status: 400 });
     }
 
-    // 기존 이미지 삭제 후 새 이미지로 교체
+    // 기존 이미지 URL 수집 → Cloudinary + DB에서 삭제 후 새 이미지로 교체
+    const oldImages = await prisma.postImage.findMany({
+      where: { postId: id },
+      select: { url: true },
+    });
+    const newImageUrls: string[] = images ?? [];
+    const removedUrls = oldImages
+      .map((img) => img.url)
+      .filter((url) => !newImageUrls.includes(url));
+
     const updated = await prisma.$transaction(async (tx) => {
       await tx.postImage.deleteMany({ where: { postId: id } });
 
@@ -82,6 +92,11 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/posts/[id]">
       });
     });
 
+    // DB 트랜잭션 완료 후 Cloudinary에서 제거된 이미지 삭제 (비동기, 실패 무시)
+    if (removedUrls.length > 0) {
+      deleteImagesByUrls(removedUrls).catch(() => {});
+    }
+
     return NextResponse.json({ success: true, post: updated });
   } catch (error) {
     console.error("[PUT /api/posts/[id]]", error);
@@ -98,7 +113,10 @@ export async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/posts/[i
     }
 
     const { id } = await ctx.params;
-    const post = await prisma.post.findUnique({ where: { id } });
+    const post = await prisma.post.findUnique({
+      where: { id },
+      include: { images: { select: { url: true } } },
+    });
 
     if (!post) {
       return NextResponse.json({ success: false, error: "게시물을 찾을 수 없습니다." }, { status: 404 });
@@ -108,7 +126,14 @@ export async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/posts/[i
       return NextResponse.json({ success: false, error: "삭제 권한이 없습니다." }, { status: 403 });
     }
 
+    const imageUrls = post.images.map((img) => img.url);
+
     await prisma.post.delete({ where: { id } });
+
+    // DB 삭제 완료 후 Cloudinary 이미지 삭제 (비동기, 실패 무시)
+    if (imageUrls.length > 0) {
+      deleteImagesByUrls(imageUrls).catch(() => {});
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
