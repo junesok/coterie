@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Key, User } from "lucide-react";
+import { Key, User, Copy } from "lucide-react";
 import axios from "axios";
 import { NavBar } from "@/components/NavBar";
 import { ThemeToggle } from "@/components/ThemeToggle";
+
+interface InviteCode {
+  id: string;
+  code: string;
+  isUsed: boolean;
+  usedBy: { name: string } | null;
+}
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -18,6 +25,23 @@ export default function SettingsPage() {
   const [nameMsg, setNameMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [codes, setCodes] = useState<InviteCode[]>([]);
+  const [codesLoading, setCodesLoading] = useState(true);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  useEffect(() => {
+    axios.get("/api/invite/my-codes")
+      .then((res) => { if (res.data.success) setCodes(res.data.codes); })
+      .finally(() => setCodesLoading(false));
+  }, []);
+
+  function handleCopy(code: string) {
+    const link = `${window.location.origin}/register?code=${code}`;
+    navigator.clipboard.writeText(link);
+    setCopied(code);
+    setTimeout(() => setCopied(null), 2000);
+  }
 
   async function handleNameChange(e: React.FormEvent) {
     e.preventDefault();
@@ -73,15 +97,58 @@ export default function SettingsPage() {
         </div>
 
         {/* 초대 코드 */}
-        <button
-          className="xp-window w-full text-left"
-          onClick={() => router.push("/profile/me/invite")}
-        >
-          <div className="p-3 flex items-center gap-2">
-            <Key size={16} strokeWidth={1.5} style={{ color: "var(--point)" }} />
-            <span className="text-sm" style={{ color: "var(--text-base)" }}>내 초대 코드 관리</span>
+        <div className="xp-window">
+          <div className="xp-titlebar">
+            <div className="flex items-center gap-1.5">
+              <Key size={12} strokeWidth={1.5} />
+              <span>내 초대 코드</span>
+            </div>
           </div>
-        </button>
+          <div className="flex flex-col">
+            {codesLoading ? (
+              <p className="p-3 text-xs" style={{ color: "var(--text-sub)" }}>불러오는 중...</p>
+            ) : codes.length === 0 ? (
+              <p className="p-3 text-xs" style={{ color: "var(--text-sub)" }}>발급된 초대 코드가 없습니다.</p>
+            ) : (
+              codes.map((code, i) => (
+                <div
+                  key={code.id}
+                  className="flex items-center justify-between px-3 py-2"
+                  style={{
+                    borderTop: i > 0 ? "1px solid var(--border)" : undefined,
+                    opacity: code.isUsed ? 0.5 : 1,
+                    background: "var(--bg-card)",
+                  }}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <span
+                      className="text-xs font-mono tracking-wider"
+                      style={{ color: code.isUsed ? "var(--text-sub)" : "var(--text-base)" }}
+                    >
+                      {code.code}
+                    </span>
+                    {code.isUsed && code.usedBy && (
+                      <span className="text-[10px]" style={{ color: "var(--text-sub)" }}>
+                        사용됨 — {code.usedBy.name}
+                      </span>
+                    )}
+                    {!code.isUsed && (
+                      <span className="text-[10px]" style={{ color: "var(--point)" }}>미사용</span>
+                    )}
+                  </div>
+                  <button
+                    className="xp-btn flex items-center gap-1 text-xs py-0.5 px-2"
+                    onClick={() => handleCopy(code.code)}
+                    disabled={code.isUsed}
+                  >
+                    <Copy size={11} strokeWidth={1.5} />
+                    {copied === code.code ? "복사됨!" : "링크 복사"}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
 
         {/* 이름 변경 */}
         <div className="xp-window">

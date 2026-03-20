@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 
@@ -10,15 +10,16 @@ const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [form, setForm] = useState({
     name: "",
     username: "",
     email: "",
     password: "",
-    inviteCode: "",
+    inviteCode: searchParams.get("code") ?? "",
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -211,5 +212,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }

@@ -25,7 +25,8 @@ export default function InvitePage() {
   }, []);
 
   function handleCopy(code: string) {
-    navigator.clipboard.writeText(code);
+    const link = `${window.location.origin}/register?code=${code}`;
+    navigator.clipboard.writeText(link);
     setCopied(code);
     setTimeout(() => setCopied(null), 2000);
   }
@@ -65,7 +66,7 @@ export default function InvitePage() {
                   disabled={code.isUsed}
                 >
                   <Copy size={12} strokeWidth={1.5} />
-                  {copied === code.code ? "복사됨!" : "복사"}
+                  {copied === code.code ? "복사됨!" : "링크 복사"}
                 </button>
               </div>
               {code.isUsed && code.usedBy && (
