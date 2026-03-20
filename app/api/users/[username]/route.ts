@@ -42,7 +42,7 @@ export async function GET(
     // 게시물에 likeCount 추가
     const posts = user.posts.map((post) => ({
       ...post,
-      author: { id: user.id, name: user.name, username: user.username },
+      author: { id: user.id, name: user.name, username: user.username, avatarUrl: user.avatarUrl },
       likeCount: post.likes.length,
       likes: undefined,
     }));

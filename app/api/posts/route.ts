@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         skip,
         take: PAGE_SIZE,
         include: {
-          author: { select: { id: true, name: true, username: true } },
+          author: { select: { id: true, name: true, username: true, avatarUrl: true } },
           images: { orderBy: { order: "asc" }, select: { url: true, order: true } },
           _count: { select: { comments: true, likes: true } },
           likes: { where: { userId }, select: { id: true } },

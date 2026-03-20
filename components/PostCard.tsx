@@ -4,13 +4,14 @@ import Link from "next/link";
 import { MessageSquare, Heart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
+import { Avatar } from "@/components/Avatar";
 
 interface PostCardProps {
   post: {
     id: string;
     content: string;
     createdAt: string | Date;
-    author: { id: string; name: string; username?: string | null };
+    author: { id: string; name: string; username?: string | null; avatarUrl?: string | null };
     images: { url: string; order: number }[];
     _count: { comments: number };
     likeCount?: number;
@@ -33,14 +34,24 @@ export function PostCard({ post }: PostCardProps) {
         {/* XP 타이틀바 — 작성자(클릭 시 프로필) + 작성 시간 */}
         <div className="xp-titlebar py-1 px-2.5 flex items-center justify-between">
           <span
-            className="text-xs font-bold text-white truncate"
+            className="flex items-center gap-1.5 min-w-0"
             onClick={(e) => {
               e.preventDefault();
               if (post.author.username) window.location.href = `/profile/${post.author.username}`;
             }}
-            style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}
+            style={{ cursor: "pointer" }}
           >
-            {authorLabel}
+            <Avatar
+              avatarUrl={post.author.avatarUrl ?? null}
+              username={post.author.username ?? post.author.name}
+              size={22}
+            />
+            <span
+              className="text-xs font-bold text-white truncate"
+              style={{ textDecoration: "underline", textUnderlineOffset: 2 }}
+            >
+              {authorLabel}
+            </span>
           </span>
           <span className="text-[10px] ml-2 shrink-0" style={{ color: "rgba(255,255,255,0.8)" }}>
             {timeAgo}
