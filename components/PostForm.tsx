@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { NavBar } from "@/components/NavBar";
 import { ImageUploader } from "@/components/ImageUploader";
+import { MentionInput } from "@/components/MentionInput";
 
 interface PostFormProps {
   initialContent?: string;
@@ -119,13 +120,14 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
           onPendingFilesChange={setPendingFiles}
         />
 
-        {/* 텍스트 입력 */}
-        <textarea
+        {/* 텍스트 입력 — @mention 자동완성 포함 */}
+        <MentionInput
+          multiline
           className="xp-input flex-1 resize-none min-h-[200px]"
           placeholder="what's on your mind..."
           value={content}
-          onChange={(e) => setContent(e.target.value)}
-          required
+          onChange={setContent}
+          dropdownDirection="down"
         />
 
         {uploadProgress && (
