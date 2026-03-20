@@ -53,7 +53,7 @@ export default function FeedPage() {
         rightSlot={
           <button
             onClick={() => router.push("/settings")}
-            className="p-1 text-white"
+            className="p-1.5 text-white"
             style={{ background: "transparent", border: "none", cursor: "pointer" }}
           >
             <Settings size={16} strokeWidth={1.5} />
