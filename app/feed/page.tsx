@@ -88,11 +88,15 @@ export default function FeedPage() {
         )}
       </div>
 
-      {/* 새 글 작성 버튼 (우하단 고정) */}
+      {/* 새 글 작성 버튼 (우하단 고정 — 컨테이너 기준, 홈 바 회피) */}
       <button
         onClick={() => router.push("/post/new")}
-        className="xp-btn fixed bottom-6 right-1/2 translate-x-[130px] flex items-center gap-1.5 text-sm px-4 py-2 z-10"
-        style={{ boxShadow: "inset 1px 1px var(--shadow-hi), inset -1px -1px var(--shadow-lo), 2px 2px 4px rgba(0,0,0,0.3)" }}
+        className="xp-btn fixed flex items-center gap-1.5 text-sm px-4 py-2 z-10"
+        style={{
+          bottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)",
+          right: "calc(max(0px, (100vw - 390px) / 2) + 16px)",
+          boxShadow: "inset 1px 1px var(--shadow-hi), inset -1px -1px var(--shadow-lo), 2px 2px 4px rgba(0,0,0,0.3)",
+        }}
       >
         <PenLine size={16} strokeWidth={1.5} />
         새 글

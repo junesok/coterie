@@ -1,10 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: "coterie",
   description: "초대받은 사람들만의 프라이빗 소셜 커뮤니티",
+};
+
+// iPhone 홈 바 영역까지 뷰포트 확장
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

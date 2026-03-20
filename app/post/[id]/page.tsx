@@ -208,11 +208,15 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
 
-          {/* 하단 고정 댓글 입력창 */}
+          {/* 하단 고정 댓글 입력창 — 홈 바 회피 */}
           <form
             onSubmit={handleSubmitComment}
             className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-10"
-            style={{ background: "var(--bg-card)", borderTop: "1px solid var(--border)" }}
+            style={{
+              background: "var(--bg-card)",
+              borderTop: "1px solid var(--border)",
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            }}
           >
             {replyTarget && (
               <div
