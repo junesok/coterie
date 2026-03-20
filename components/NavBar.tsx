@@ -50,10 +50,20 @@ export function NavBar({
           {showBack && (
             <button
               onClick={() => router.back()}
-              className="xp-btn p-1 flex items-center gap-1 text-white"
-              style={{ background: "transparent", border: "none", boxShadow: "none", cursor: "pointer" }}
+              className="flex items-center gap-1 text-white"
+              style={{
+                background: "rgba(255,255,255,0.18)",
+                border: "1px solid rgba(255,255,255,0.55)",
+                boxShadow: "inset 0 1px rgba(255,255,255,0.25)",
+                borderRadius: 3,
+                padding: "2px 6px 2px 3px",
+                cursor: "pointer",
+                fontSize: 12,
+                fontFamily: "Tahoma, sans-serif",
+              }}
             >
-              <ChevronLeft size={16} strokeWidth={1.5} />
+              <ChevronLeft size={14} strokeWidth={2} />
+              <span style={{ lineHeight: 1 }}>뒤로</span>
             </button>
           )}
           <span className="font-bold text-sm text-white">{title}</span>
@@ -111,21 +121,38 @@ export function EditDeleteButtons({
   onDelete: () => void;
 }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1.5">
       <button
         onClick={onEdit}
-        className="xp-btn py-0.5 px-2 flex items-center gap-1 text-xs text-white"
-        style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.4)", boxShadow: "none" }}
+        className="flex items-center gap-1 text-xs text-white"
+        style={{
+          background: "rgba(255,255,255,0.18)",
+          border: "1px solid rgba(255,255,255,0.55)",
+          boxShadow: "inset 0 1px rgba(255,255,255,0.25)",
+          borderRadius: 3,
+          padding: "2px 8px",
+          cursor: "pointer",
+          fontFamily: "Tahoma, sans-serif",
+        }}
       >
-        <Pencil size={12} strokeWidth={1.5} />
+        <Pencil size={11} strokeWidth={1.5} />
         수정
       </button>
       <button
         onClick={onDelete}
-        className="xp-btn py-0.5 px-2 flex items-center gap-1 text-xs"
-        style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.4)", boxShadow: "none", color: "#ffaaaa" }}
+        className="flex items-center gap-1 text-xs"
+        style={{
+          background: "rgba(160,0,0,0.35)",
+          border: "1px solid rgba(255,120,120,0.7)",
+          boxShadow: "inset 0 1px rgba(255,180,180,0.2)",
+          borderRadius: 3,
+          padding: "2px 8px",
+          cursor: "pointer",
+          color: "#ffdddd",
+          fontFamily: "Tahoma, sans-serif",
+        }}
       >
-        <Trash2 size={12} strokeWidth={1.5} />
+        <Trash2 size={11} strokeWidth={1.5} />
         삭제
       </button>
     </div>
