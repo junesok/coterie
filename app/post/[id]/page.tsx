@@ -13,6 +13,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { XpDialog } from "@/components/XpDialog";
 import { CommentItem, type CommentData } from "@/components/CommentItem";
+import { MentionInput } from "@/components/MentionInput";
 
 interface Post {
   id: string;
@@ -69,8 +70,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  async function handleSubmitComment(e: React.FormEvent) {
-    e.preventDefault();
+  async function submitComment() {
     if (!commentText.trim() || submitting) return;
     setSubmitting(true);
     try {
@@ -84,6 +84,11 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleSubmitComment(e: React.FormEvent) {
+    e.preventDefault();
+    await submitComment();
   }
 
   async function handleLikeToggle() {
@@ -284,12 +289,12 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             )}
             <div className="flex gap-2 p-2">
-              <input
-                ref={inputRef}
-                className="xp-input flex-1 text-sm"
-                placeholder={replyTarget ? `Reply to ${replyTarget}...` : "Write a comment..."}
+              <MentionInput
                 value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
+                onChange={setCommentText}
+                placeholder={replyTarget ? `Reply to ${replyTarget}...` : "Write a comment..."}
+                inputRef={inputRef}
+                onSubmit={submitComment}
               />
               <button
                 type="submit"
