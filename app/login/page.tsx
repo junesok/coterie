@@ -54,11 +54,6 @@ function LoginForm() {
         {/* 타이틀바 */}
         <div className="xp-titlebar">
           <span>coterie</span>
-          <div className="flex gap-1">
-            <div className="w-4 h-4 xp-btn text-[10px] flex items-center justify-center p-0">_</div>
-            <div className="w-4 h-4 xp-btn text-[10px] flex items-center justify-center p-0">□</div>
-            <div className="w-4 h-4 xp-btn text-[10px] flex items-center justify-center p-0" style={{ background: "#CC0000", color: "#fff" }}>✕</div>
-          </div>
         </div>
 
         {/* 콘텐츠 */}

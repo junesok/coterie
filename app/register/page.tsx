@@ -113,11 +113,6 @@ export default function RegisterPage() {
       <div className="xp-window w-full max-w-[340px]">
         <div className="xp-titlebar">
           <span>coterie — 가입</span>
-          <div className="flex gap-1">
-            <div className="w-4 h-4 xp-btn text-[10px] flex items-center justify-center p-0">_</div>
-            <div className="w-4 h-4 xp-btn text-[10px] flex items-center justify-center p-0">□</div>
-            <div className="w-4 h-4 xp-btn text-[10px] flex items-center justify-center p-0" style={{ background: "#CC0000", color: "#fff" }}>✕</div>
-          </div>
         </div>
 
         <div className="p-5">
