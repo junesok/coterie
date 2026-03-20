@@ -17,7 +17,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]"
     const post = await prisma.post.findUnique({
       where: { id },
       include: {
-        author: { select: { id: true, name: true, username: true } },
+        author: { select: { id: true, name: true, username: true, avatarUrl: true } },
         images: { orderBy: { order: "asc" } },
         _count: { select: { comments: true, likes: true } },
         likes: { where: { userId: session.user.id }, select: { id: true } },

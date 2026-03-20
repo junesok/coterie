@@ -8,6 +8,7 @@ import { enUS } from "date-fns/locale";
 import { Heart } from "lucide-react";
 import axios from "axios";
 import { NavBar } from "@/components/NavBar";
+import { Avatar } from "@/components/Avatar";
 import { Pencil, Trash2 } from "lucide-react";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { XpDialog } from "@/components/XpDialog";
@@ -17,7 +18,7 @@ interface Post {
   id: string;
   content: string;
   createdAt: string;
-  author: { id: string; name: string; username?: string | null };
+  author: { id: string; name: string; username?: string | null; avatarUrl?: string | null };
   images: { url: string; order: number }[];
   _count: { comments: number };
   likeCount: number;
@@ -141,17 +142,26 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
             {/* 본문 */}
             <div className="p-4">
               {/* 작성자 행 + edit/delete */}
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs" style={{ color: "var(--text-sub)" }}>
-                  <a
-                    href={post.author.username ? `/profile/${post.author.username}` : "#"}
-                    style={{ color: "var(--point)", textDecoration: "none", fontWeight: 600 }}
-                  >
-                    {post.author.username ? `@${post.author.username}` : post.author.name}
-                  </a>
-                  {" · "}
-                  {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: enUS })}
-                </p>
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <a
+                  href={post.author.username ? `/profile/${post.author.username}` : "#"}
+                  className="flex items-center gap-2 min-w-0"
+                  style={{ textDecoration: "none" }}
+                >
+                  <Avatar
+                    avatarUrl={post.author.avatarUrl ?? null}
+                    username={post.author.username ?? post.author.name}
+                    size={28}
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-bold truncate" style={{ color: "var(--point)" }}>
+                      {post.author.username ? `@${post.author.username}` : post.author.name}
+                    </span>
+                    <span className="text-[10px]" style={{ color: "var(--text-sub)" }}>
+                      {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: enUS })}
+                    </span>
+                  </div>
+                </a>
                 {isOwner && (
                   <div className="flex items-center gap-1.5">
                     <button

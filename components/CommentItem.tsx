@@ -7,6 +7,7 @@ import { enUS } from "date-fns/locale";
 import { Pencil, Trash2 } from "lucide-react";
 import axios from "axios";
 import { XpDialog } from "@/components/XpDialog";
+import { Avatar } from "@/components/Avatar";
 
 export interface CommentData {
   id: string;
@@ -14,7 +15,7 @@ export interface CommentData {
   isDeleted: boolean;
   isEdited: boolean;
   createdAt: string;
-  author: { id: string; name: string; username?: string | null };
+  author: { id: string; name: string; username?: string | null; avatarUrl?: string | null };
   replies?: CommentData[];
 }
 
@@ -85,16 +86,23 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
       ) : (
         // 일반 댓글
         <div>
-          <div className="flex items-baseline justify-between mb-0.5">
+          <div className="flex items-start justify-between mb-0.5 gap-2">
             <a
               href={comment.author.username ? `/profile/${comment.author.username}` : undefined}
-              className="text-xs font-bold"
+              className="flex items-center gap-1.5 text-xs font-bold min-w-0"
               style={{ color: "var(--text-base)", textDecoration: "none" }}
               onClick={(e) => e.stopPropagation()}
             >
-              {comment.author.username ? `@${comment.author.username}` : comment.author.name}
+              <Avatar
+                avatarUrl={comment.author.avatarUrl ?? null}
+                username={comment.author.username ?? comment.author.name}
+                size={20}
+              />
+              <span className="truncate">
+                {comment.author.username ? `@${comment.author.username}` : comment.author.name}
+              </span>
             </a>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               <span className="text-xs" style={{ color: "var(--text-sub)" }}>{timeAgo}</span>
               {comment.isEdited && (
                 <span className="text-[10px]" style={{ color: "var(--text-sub)" }}>(edited)</span>

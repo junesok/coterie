@@ -23,11 +23,11 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
       where: { postId, parentId: null },
       orderBy: { createdAt: "asc" },
       include: {
-        author: { select: { id: true, name: true, username: true } },
+        author: { select: { id: true, name: true, username: true, avatarUrl: true } },
         replies: {
           orderBy: { createdAt: "asc" },
           include: {
-            author: { select: { id: true, name: true, username: true } },
+            author: { select: { id: true, name: true, username: true, avatarUrl: true } },
           },
         },
       },
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
         parentId: parentId ?? null,
       },
       include: {
-        author: { select: { id: true, name: true, username: true } },
+        author: { select: { id: true, name: true, username: true, avatarUrl: true } },
       },
     });
 
