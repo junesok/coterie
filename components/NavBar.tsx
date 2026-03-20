@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, Settings, Pencil, Trash2, Bell, ShieldCheck } from "lucide-react";
+import { ChevronLeft, Settings, Pencil, Trash2, Bell, ShieldCheck, CircleUser } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -45,6 +45,7 @@ export function NavBar({
   const { data: session } = useSession();
   const unreadCount = useUnreadCount(showNotification);
   const isAdmin = session?.user?.isAdmin;
+  const username = session?.user?.username;
 
   return (
     <div>
@@ -73,6 +74,17 @@ export function NavBar({
         </div>
         <div className="flex items-center gap-1">
           {rightSlot}
+          {/* 내 프로필 버튼 */}
+          {username && (
+            <button
+              onClick={() => router.push(`/profile/${username}`)}
+              className="relative p-1 text-white"
+              style={{ background: "transparent", border: "none", cursor: "pointer" }}
+              title="my profile"
+            >
+              <CircleUser size={16} strokeWidth={1.5} />
+            </button>
+          )}
           {/* 관리자 버튼 — 관리자 계정에만 표시 */}
           {isAdmin && (
             <button
