@@ -3,12 +3,13 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://coterie-phi.vercel.app"),
   title: "coterie",
   description: "coterie",
   openGraph: {
     title: "coterie",
     description: "coterie",
-    images: [{ url: "/coterie.jpg", width: 1200, height: 630, alt: "coterie" }],
+    images: [{ url: "/coterie.jpg", width: 250, height: 219, alt: "coterie" }],
     type: "website",
   },
   twitter: {
