@@ -49,9 +49,12 @@ export function NavBar({
 
   return (
     <div>
-      <div className="xp-titlebar flex items-center justify-between px-3 py-2">
-        <div className="flex items-center gap-2">
-          {showBack && (
+      {/* relative 컨테이너 — 가운데 coterie 링크 절대 배치용 */}
+      <div className="xp-titlebar relative flex items-center justify-between px-4 py-3">
+
+        {/* 왼쪽 — back 버튼 or 타이틀 */}
+        <div className="flex items-center gap-2.5 z-10">
+          {showBack ? (
             <button
               onClick={() => router.back()}
               className="flex items-center gap-1 text-white"
@@ -59,59 +62,81 @@ export function NavBar({
                 background: "rgba(255,255,255,0.18)",
                 border: "1px solid rgba(255,255,255,0.55)",
                 boxShadow: "inset 0 1px rgba(255,255,255,0.25)",
-                borderRadius: 3,
-                padding: "2px 6px 2px 3px",
+                borderRadius: 4,
+                padding: "5px 10px 5px 6px",
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: 13,
                 fontFamily: "Tahoma, sans-serif",
               }}
             >
-              <ChevronLeft size={14} strokeWidth={2} />
+              <ChevronLeft size={20} strokeWidth={2} />
               <span style={{ lineHeight: 1 }}>back</span>
             </button>
+          ) : (
+            <span className="font-bold text-base text-white" style={{ fontFamily: "Tahoma, sans-serif" }}>
+              {title}
+            </span>
           )}
-          <span className="font-bold text-sm text-white">{title}</span>
         </div>
-        <div className="flex items-center gap-1">
+
+        {/* 가운데 — showBack일 때만 coterie → /feed 링크 */}
+        {showBack && (
+          <a
+            href="/feed"
+            className="absolute left-1/2 -translate-x-1/2 font-bold text-white"
+            style={{
+              fontFamily: "Tahoma, sans-serif",
+              fontSize: 15,
+              textDecoration: "none",
+              letterSpacing: "0.01em",
+              textShadow: "0 1px 2px rgba(0,0,0,0.4)",
+            }}
+          >
+            coterie
+          </a>
+        )}
+
+        {/* 오른쪽 — 아이콘 버튼들 */}
+        <div className="flex items-center gap-1.5 z-10">
           {rightSlot}
           {/* 내 프로필 버튼 */}
           {username && (
             <button
               onClick={() => router.push(`/profile/${username}`)}
-              className="relative p-1 text-white"
+              className="relative p-1.5 text-white"
               style={{ background: "transparent", border: "none", cursor: "pointer" }}
               title="my profile"
             >
-              <CircleUser size={16} strokeWidth={1.5} />
+              <CircleUser size={24} strokeWidth={1.5} />
             </button>
           )}
-          {/* 관리자 버튼 — 관리자 계정에만 표시 */}
+          {/* 관리자 버튼 */}
           {isAdmin && (
             <button
               onClick={() => router.push("/coterie-admin/dashboard")}
-              className="relative p-1 text-white"
+              className="relative p-1.5 text-white"
               style={{ background: "transparent", border: "none", cursor: "pointer" }}
               title="admin"
             >
-              <ShieldCheck size={16} strokeWidth={1.5} />
+              <ShieldCheck size={24} strokeWidth={1.5} />
             </button>
           )}
           {showNotification && (
             <button
               onClick={() => router.push("/notifications")}
-              className="relative p-1 text-white"
+              className="relative p-1.5 text-white"
               style={{ background: "transparent", border: "none", cursor: "pointer" }}
               title="notifications"
             >
-              <Bell size={16} strokeWidth={1.5} />
+              <Bell size={24} strokeWidth={1.5} />
               {unreadCount > 0 && (
                 <span
-                  className="absolute -top-0.5 -right-0.5 flex items-center justify-center text-[9px] font-bold leading-none rounded-full"
+                  className="absolute top-0.5 right-0.5 flex items-center justify-center text-[9px] font-bold leading-none rounded-full"
                   style={{
                     background: "var(--danger)",
                     color: "#fff",
-                    minWidth: 14,
-                    height: 14,
+                    minWidth: 15,
+                    height: 15,
                     padding: "0 2px",
                   }}
                 >
