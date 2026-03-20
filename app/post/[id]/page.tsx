@@ -7,7 +7,8 @@ import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { Heart } from "lucide-react";
 import axios from "axios";
-import { NavBar, EditDeleteButtons } from "@/components/NavBar";
+import { NavBar } from "@/components/NavBar";
+import { Pencil, Trash2 } from "lucide-react";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { XpDialog } from "@/components/XpDialog";
 import { CommentItem, type CommentData } from "@/components/CommentItem";
@@ -124,18 +125,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="flex flex-col flex-1" style={{ background: "var(--bg-card)" }}>
-      <NavBar
-        title="post"
-        showBack
-        rightSlot={
-          isOwner && post ? (
-            <EditDeleteButtons
-              onEdit={() => router.push(`/post/${id}/edit`)}
-              onDelete={() => setShowDeleteDialog(true)}
-            />
-          ) : undefined
-        }
-      />
+      <NavBar title="post" showBack />
 
       {loading ? (
         <p className="text-center mt-8 text-sm" style={{ color: "var(--text-sub)" }}>Loading...</p>
@@ -150,10 +140,57 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
 
             {/* 본문 */}
             <div className="p-4">
-              <p className="text-xs mb-1" style={{ color: "var(--text-sub)" }}>
-                {post.author.username ? `@${post.author.username}` : post.author.name} ·{" "}
-                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: enUS })}
-              </p>
+              {/* 작성자 행 + edit/delete */}
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs" style={{ color: "var(--text-sub)" }}>
+                  <a
+                    href={post.author.username ? `/profile/${post.author.username}` : "#"}
+                    style={{ color: "var(--point)", textDecoration: "none", fontWeight: 600 }}
+                  >
+                    {post.author.username ? `@${post.author.username}` : post.author.name}
+                  </a>
+                  {" · "}
+                  {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: enUS })}
+                </p>
+                {isOwner && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => router.push(`/post/${id}/edit`)}
+                      className="flex items-center gap-1 text-xs"
+                      style={{
+                        background: "var(--bg-button)",
+                        border: "1px solid var(--border)",
+                        boxShadow: "inset 1px 1px #fff, inset -1px -1px var(--shadow-lo)",
+                        borderRadius: 3,
+                        padding: "3px 8px",
+                        cursor: "pointer",
+                        color: "var(--text-base)",
+                        fontFamily: "Tahoma, sans-serif",
+                      }}
+                    >
+                      <Pencil size={11} strokeWidth={1.5} />
+                      edit
+                    </button>
+                    <button
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="flex items-center gap-1 text-xs"
+                      style={{
+                        background: "var(--bg-button)",
+                        border: "1px solid var(--border)",
+                        boxShadow: "inset 1px 1px #fff, inset -1px -1px var(--shadow-lo)",
+                        borderRadius: 3,
+                        padding: "3px 8px",
+                        cursor: "pointer",
+                        color: "var(--danger)",
+                        fontFamily: "Tahoma, sans-serif",
+                      }}
+                    >
+                      <Trash2 size={11} strokeWidth={1.5} />
+                      delete
+                    </button>
+                  </div>
+                )}
+              </div>
               <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-base)" }}>
                 {post.content}
               </p>
