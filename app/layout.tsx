@@ -17,8 +17,8 @@ export default function RootLayout({
       <body>
         <Providers>
           {/* 모바일 전용 390px 컨테이너 */}
-          <div className="min-h-screen flex flex-col items-center" style={{ background: "var(--bg-page)" }}>
-            <div className="w-full max-w-[390px] min-h-screen flex flex-col" style={{ background: "var(--bg-card)" }}>
+          <div className="min-h-screen flex flex-col items-center" style={{ background: "var(--bg-desktop)" }}>
+            <div className="w-full max-w-[390px] min-h-screen flex flex-col" style={{ background: "var(--bg-page)" }}>
               {children}
             </div>
           </div>

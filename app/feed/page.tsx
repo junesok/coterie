@@ -54,7 +54,7 @@ export default function FeedPage() {
           <button
             onClick={() => router.push("/settings")}
             className="p-1 text-white"
-            style={{ background: "transparent", border: "none" }}
+            style={{ background: "transparent", border: "none", cursor: "pointer" }}
           >
             <Settings size={16} strokeWidth={1.5} />
           </button>

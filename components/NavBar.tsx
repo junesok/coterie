@@ -51,7 +51,7 @@ export function NavBar({
             <button
               onClick={() => router.back()}
               className="xp-btn p-1 flex items-center gap-1 text-white"
-              style={{ background: "transparent", border: "none", boxShadow: "none" }}
+              style={{ background: "transparent", border: "none", boxShadow: "none", cursor: "pointer" }}
             >
               <ChevronLeft size={16} strokeWidth={1.5} />
             </button>
@@ -64,7 +64,7 @@ export function NavBar({
             <button
               onClick={() => router.push("/notifications")}
               className="relative p-1 text-white"
-              style={{ background: "transparent", border: "none" }}
+              style={{ background: "transparent", border: "none", cursor: "pointer" }}
               title="알림"
             >
               <Bell size={16} strokeWidth={1.5} />

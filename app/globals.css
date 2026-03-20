@@ -2,17 +2,22 @@
 
 /* ── XP 라이트 모드 (Luna) ── */
 :root {
+  --bg-desktop:   #3A7EC9;     /* XP 바탕화면 배경 */
   --bg-page:      #ECE9D8;
   --bg-card:      #FFFFFF;
   --bg-button:    #ECE9D8;
   --bg-input:     #FFFFFF;
+  --bg-statusbar: #D4D0C8;
   --title-start:  #0A246A;
-  --title-end:    #3A6EA5;
+  --title-mid:    #1B5EC9;
+  --title-end:    #55A0E0;
   --title-text:   #FFFFFF;
   --point:        #003399;
   --text-base:    #000000;
   --text-sub:     #6B6B6B;
   --border:       #ACA899;
+  --win-border:   #0A57C2;
+  --win-inner:    rgba(255,255,255,0.65);
   --shadow-hi:    #FFFFFF;
   --shadow-lo:    #848284;
   --danger:       #CC0000;
@@ -20,17 +25,22 @@
 
 /* ── XP 다크 모드 (Zune/Media Center) ── */
 .dark {
+  --bg-desktop:   #0A0A0A;
   --bg-page:      #1A1A1A;
   --bg-card:      #2D2D2D;
   --bg-button:    #3A3A3A;
   --bg-input:     #2D2D2D;
+  --bg-statusbar: #222222;
   --title-start:  #1F1F1F;
+  --title-mid:    #252525;
   --title-end:    #2A2A2A;
   --title-text:   #FFFFFF;
   --point:        #FF8C00;
   --text-base:    #E8E8E8;
   --text-sub:     #999999;
   --border:       #444444;
+  --win-border:   #333333;
+  --win-inner:    rgba(255,255,255,0.08);
   --shadow-hi:    #555555;
   --shadow-lo:    #111111;
   --danger:       #FF4444;
@@ -60,14 +70,50 @@ html, body {
 }
 
 body {
-  background-color: var(--bg-page);
+  background-color: var(--bg-desktop);
   color: var(--text-base);
   font-family: Tahoma, "Segoe UI", sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  /* 테마 전환 부드럽게 */
   transition: background-color 0.2s, color 0.2s;
 }
+
+/* ── 모든 클릭 요소에 포인터 커서 ── */
+a,
+button,
+[role="button"],
+[role="tab"],
+label[for],
+select,
+.xp-btn {
+  cursor: pointer;
+}
+
+/* ── XP 스타일 스크롤바 ── */
+::-webkit-scrollbar {
+  width: 16px;
+}
+::-webkit-scrollbar-track {
+  background: #D4D0C8;
+  border-left: 1px solid #ACA899;
+}
+::-webkit-scrollbar-thumb {
+  background: #C4C0B8;
+  border: 1px solid #848284;
+  box-shadow: inset 1px 1px #FFFFFF, inset -1px -1px #848284;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B8B4AC;
+}
+::-webkit-scrollbar-button {
+  background: #D4D0C8;
+  border: 1px solid #848284;
+  box-shadow: inset 1px 1px #FFFFFF, inset -1px -1px #848284;
+  height: 16px;
+}
+.dark ::-webkit-scrollbar-track { background: #1A1A1A; border-left-color: #333; }
+.dark ::-webkit-scrollbar-thumb { background: #3A3A3A; border-color: #555; box-shadow: inset 1px 1px #555, inset -1px -1px #111; }
+.dark ::-webkit-scrollbar-button { background: #2D2D2D; border-color: #444; box-shadow: inset 1px 1px #555, inset -1px -1px #111; }
 
 /* ── XP 버튼 ── */
 .xp-btn {
@@ -80,6 +126,10 @@ body {
   cursor: pointer;
   color: var(--text-base);
   transition: box-shadow 0.05s;
+}
+
+.xp-btn:hover:not(:disabled) {
+  box-shadow: inset 1px 1px var(--shadow-hi), inset -1px -1px var(--shadow-lo), 0 0 0 1px var(--point);
 }
 
 .xp-btn:active {
@@ -110,24 +160,63 @@ body {
   outline-offset: -1px;
 }
 
-/* ── XP 타이틀바 ── */
+/* ── XP 타이틀바 (진짜 Luna 그라디언트) ── */
 .xp-titlebar {
-  background: linear-gradient(to bottom, var(--title-start), var(--title-end));
+  background: linear-gradient(
+    to bottom,
+    #6FAED8 0px,
+    #2B72CE 4px,
+    #1649B9 30%,
+    #1548B8 55%,
+    #2B6CC7 80%,
+    #55A0E0 100%
+  );
   color: var(--title-text);
-  padding: 4px 8px;
+  padding: 5px 8px;
   font-weight: bold;
   font-size: 13px;
   user-select: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+}
+
+.dark .xp-titlebar {
+  background: linear-gradient(
+    to bottom,
+    var(--title-start),
+    var(--title-end)
+  );
+  text-shadow: none;
 }
 
 /* ── XP 창 프레임 ── */
 .xp-window {
-  border: 2px solid var(--border);
-  box-shadow: inset 1px 1px var(--shadow-hi), 2px 2px 4px rgba(0,0,0,0.4);
+  border: 2px solid var(--win-border);
+  box-shadow:
+    inset 0 0 0 1px var(--win-inner),
+    2px 2px 6px rgba(0,0,0,0.45);
   background: var(--bg-card);
+  overflow: hidden;
+  border-radius: 6px 6px 0 0;
+}
+
+/* ── XP 창 타이틀바 (위 모서리 둥글게) ── */
+.xp-titlebar:first-child {
+  border-radius: 4px 4px 0 0;
+}
+
+/* ── XP 상태바 ── */
+.xp-statusbar {
+  background: var(--bg-statusbar);
+  border-top: 1px solid var(--shadow-lo);
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--text-sub);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* ── XP HR ── */
@@ -136,4 +225,27 @@ body {
   border-top: 1px solid var(--shadow-lo);
   border-bottom: 1px solid var(--shadow-hi);
   margin: 0;
+}
+
+/* ── XP 창 컨트롤 버튼 (─ □ ✕) ── */
+.xp-ctrl-btn {
+  width: 16px;
+  height: 14px;
+  border: 1px solid #ACA899;
+  box-shadow: inset 1px 1px #FFFFFF, inset -1px -1px #848284;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: bold;
+  cursor: pointer;
+  background: #D4D0C8;
+  color: #000000;
+  flex-shrink: 0;
+}
+
+.xp-ctrl-btn.close {
+  background: #CC0000;
+  color: #FFFFFF;
+  border-color: #990000;
 }
