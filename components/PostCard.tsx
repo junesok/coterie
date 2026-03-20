@@ -60,13 +60,34 @@ export function PostCard({ post }: PostCardProps) {
 
         {/* 썸네일 이미지 */}
         {post.images.length > 0 && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={post.images[0].url}
-            alt="게시물 이미지"
-            className="w-full h-36 object-cover"
-            style={{ borderBottom: "1px solid var(--border)" }}
-          />
+          <div className="relative" style={{ borderBottom: "1px solid var(--border)" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={post.images[0].url}
+              alt="게시물 이미지"
+              className="w-full h-36 object-cover"
+            />
+            {post.images.length > 1 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 6,
+                  right: 8,
+                  background: "rgba(0,0,0,0.5)",
+                  color: "#fff",
+                  fontSize: 11,
+                  fontFamily: "Tahoma, sans-serif",
+                  borderRadius: 10,
+                  padding: "2px 8px",
+                  lineHeight: "16px",
+                  letterSpacing: "0.02em",
+                  pointerEvents: "none",
+                }}
+              >
+                1 / {post.images.length}
+              </div>
+            )}
+          </div>
         )}
 
         {/* 본문 미리보기 */}
