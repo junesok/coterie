@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { createInviteCodesForUser } from "@/lib/invite";
 
 const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
 
@@ -70,23 +71,28 @@ export async function POST(req: NextRequest) {
     const passwordHash = await bcrypt.hash(password, 12);
 
     // 트랜잭션: 유저 생성 + 초대코드 사용 처리
-    await prisma.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
+    const newUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
         data: {
           name,
           username: normalizedUsername,
           email,
           passwordHash,
-          isVerified: true, // 이메일 인증 없이 즉시 활성화
+          isVerified: true,
           invitedById: invite.ownerId,
         },
       });
 
       await tx.inviteCode.update({
         where: { id: invite.id },
-        data: { isUsed: true, usedById: newUser.id, usedAt: new Date() },
+        data: { isUsed: true, usedById: user.id, usedAt: new Date() },
       });
+
+      return user;
     });
+
+    // 신규 가입자에게 초대 코드 3개 즉시 지급
+    await createInviteCodesForUser(newUser.id, 3);
 
     return NextResponse.json(
       { success: true, message: "가입 완료." },
