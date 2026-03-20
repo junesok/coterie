@@ -110,7 +110,23 @@ function RegisterForm() {
     "var(--text-sub)";
 
   return (
-    <div className="flex flex-col flex-1 justify-center items-center p-6">
+    <div className="flex flex-col flex-1 justify-center items-center p-6 gap-4">
+
+      {/* 사이트 소개 */}
+      <div className="xp-window w-full max-w-[340px]">
+        <div className="xp-titlebar"><span>coterie에 오신 것을 환영합니다</span></div>
+        <div className="p-4 flex flex-col gap-2.5 text-sm" style={{ color: "var(--text-base)", lineHeight: 1.7 }}>
+          <p>안녕하세요. 사이트 만든 사람입니다.<br />인스타그램 말고 우리끼리 잘 놀아봐요.</p>
+          <hr className="xp-hr" />
+          <ul className="flex flex-col gap-1.5 text-xs" style={{ color: "var(--text-sub)" }}>
+            <li>— 저는 당신의 비밀번호를 알 수 없습니다.</li>
+            <li>— 도 넘은 게시물은 제가 삭제 처리할 수 있습니다.</li>
+            <li style={{ color: "var(--text-base)" }}>— 단, 웃기면 안 지웁니다.</li>
+          </ul>
+          <p className="text-xs" style={{ color: "var(--text-sub)" }}>종종 놀러 오세요. 감사합니다, 땡큐.</p>
+        </div>
+      </div>
+
       <div className="xp-window w-full max-w-[340px]">
         <div className="xp-titlebar">
           <span>coterie — 가입</span>
