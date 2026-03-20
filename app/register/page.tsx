@@ -116,11 +116,12 @@ function RegisterForm() {
       <div className="xp-window w-full max-w-[340px]">
         <div className="xp-titlebar"><span>welcome to coterie</span></div>
         <div className="p-4 flex flex-col gap-2.5 text-sm" style={{ color: "var(--text-base)", lineHeight: 1.7 }}>
-          <p>hey. i made this site.<br />let&apos;s hang out here instead of instagram.</p>
+          <p>hey. i made this.<br />let&apos;s hang out here instead of instagram.</p>
           <hr className="xp-hr" />
           <ul className="flex flex-col gap-1.5 text-xs" style={{ color: "var(--text-sub)" }}>
+            <li>— no feed without logging in.</li>
             <li>— i cannot see your password.</li>
-            <li>— i can remove posts that cross the line.</li>
+            <li>— i can remove posts that go too far.</li>
             <li style={{ color: "var(--text-base)" }}>— unless it&apos;s funny.</li>
           </ul>
           <p className="text-xs" style={{ color: "var(--text-sub)" }}>come back often. thanks.</p>
