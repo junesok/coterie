@@ -324,22 +324,24 @@ export default function ProfilePage() {
       {/* 친구 목록 모달 */}
       {showFriends && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ background: "rgba(0,0,0,0.4)" }}
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: "rgba(0,0,0,0.5)" }}
           onClick={() => setShowFriends(false)}
         >
           <div
-            className="xp-window w-full max-w-[390px]"
-            style={{ maxHeight: "70vh", display: "flex", flexDirection: "column" }}
+            className="xp-window w-full max-w-[340px]"
+            style={{ maxHeight: "65vh", display: "flex", flexDirection: "column" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="xp-titlebar">
               <span>friends · {friendCount}</span>
+              {/* Luna XP 닫기 버튼 */}
               <button
                 onClick={() => setShowFriends(false)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#fff", padding: 0 }}
+                className="xp-ctrl-btn close"
+                style={{ flexShrink: 0 }}
               >
-                <X size={14} strokeWidth={2} />
+                <X size={9} strokeWidth={2.5} />
               </button>
             </div>
             <div className="overflow-y-auto flex-1 p-3 flex flex-col gap-2">
