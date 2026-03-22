@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MessageSquare, Heart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
@@ -20,6 +20,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const router = useRouter();
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
     addSuffix: true,
     locale: enUS,
@@ -30,15 +31,19 @@ export function PostCard({ post }: PostCardProps) {
     : post.author.name;
 
   return (
-    <Link href={`/post/${post.id}`} className="block mb-2 mx-2">
+    <div
+      className="block mb-2 mx-2"
+      onClick={() => router.push(`/post/${post.id}`)}
+      style={{ cursor: "pointer" }}
+    >
       <div className="xp-window transition-all hover:brightness-95">
         {/* XP 타이틀바 — 작성자(클릭 시 프로필) + 작성 시간 */}
         <div className="xp-titlebar py-1 px-2.5 flex items-center justify-between">
           <span
             className="flex items-center gap-1.5 min-w-0"
             onClick={(e) => {
-              e.preventDefault();
-              if (post.author.username) window.location.href = `/profile/${post.author.username}`;
+              e.stopPropagation();
+              if (post.author.username) router.push(`/profile/${post.author.username}`);
             }}
             style={{ cursor: "pointer" }}
           >
@@ -122,6 +127,6 @@ export function PostCard({ post }: PostCardProps) {
           </span>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
