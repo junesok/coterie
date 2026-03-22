@@ -5,12 +5,29 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import Image from "next/image";
 
 interface NavBarProps {
   title?: string;
   showBack?: boolean;
   rightSlot?: React.ReactNode;
   showNotification?: boolean;
+}
+
+// 내 프로필 아바타 훅
+function useMyAvatar() {
+  const { data: session } = useSession();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!session) return;
+    axios
+      .get("/api/users/me")
+      .then((res) => setAvatarUrl(res.data.user?.avatarUrl ?? null))
+      .catch(() => {});
+  }, [session]);
+
+  return avatarUrl;
 }
 
 // 미읽은 알림 수 폴링 훅 (30초 주기)
@@ -44,6 +61,7 @@ export function NavBar({
   const router = useRouter();
   const { data: session } = useSession();
   const unreadCount = useUnreadCount(showNotification);
+  const myAvatarUrl = useMyAvatar();
   const isAdmin = session?.user?.isAdmin;
   const username = session?.user?.username;
 
@@ -99,14 +117,24 @@ export function NavBar({
         {/* 오른쪽 — 아이콘 버튼들 */}
         <div className="flex items-center gap-1.5 z-10">
           {rightSlot}
-          {/* 내 프로필 버튼 — username 없으면 /profile/me fallback */}
+          {/* 내 프로필 버튼 — 프로필 사진 있으면 이미지, 없으면 아이콘 */}
           <button
             onClick={() => router.push(username ? `/profile/${username}` : "/profile/me")}
-            className="relative p-1.5 text-white"
+            className="relative p-1 text-white"
             style={{ background: "transparent", border: "none", cursor: "pointer" }}
             title="my profile"
           >
-            <CircleUser size={24} strokeWidth={1.5} />
+            {myAvatarUrl ? (
+              <Image
+                src={myAvatarUrl}
+                alt="my profile"
+                width={28}
+                height={28}
+                style={{ borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.7)" }}
+              />
+            ) : (
+              <CircleUser size={26} strokeWidth={1.5} />
+            )}
           </button>
           {/* 관리자 버튼 */}
           {isAdmin && (

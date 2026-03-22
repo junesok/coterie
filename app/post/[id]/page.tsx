@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { Heart } from "lucide-react";
+import { Heart, Lock } from "lucide-react";
 import axios from "axios";
 import { NavBar } from "@/components/NavBar";
 import { Avatar } from "@/components/Avatar";
@@ -20,6 +20,7 @@ interface Post {
   id: string;
   content: string;
   createdAt: string;
+  visibility: "PUBLIC" | "FRIENDS";
   author: { id: string; name: string; username?: string | null; avatarUrl?: string | null };
   images: { url: string; order: number }[];
   _count: { comments: number };
@@ -163,9 +164,25 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                     <span className="text-xs font-bold truncate" style={{ color: "var(--point)" }}>
                       {post.author.username ? `@${post.author.username}` : post.author.name}
                     </span>
-                    <span className="text-[10px]" style={{ color: "var(--text-sub)" }}>
-                      {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: enUS })}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px]" style={{ color: "var(--text-sub)" }}>
+                        {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: enUS })}
+                      </span>
+                      {post.visibility === "FRIENDS" && (
+                        <span
+                          className="flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.5"
+                          style={{
+                            background: "var(--point)",
+                            color: "#fff",
+                            borderRadius: 4,
+                            lineHeight: 1,
+                          }}
+                        >
+                          <Lock size={8} strokeWidth={2.5} />
+                          friends
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </a>
                 {isOwner && (
