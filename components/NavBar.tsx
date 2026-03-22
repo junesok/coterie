@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
-import Image from "next/image";
 
 interface NavBarProps {
   title?: string;
@@ -125,12 +124,13 @@ export function NavBar({
             title="my profile"
           >
             {myAvatarUrl ? (
-              <Image
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 src={myAvatarUrl}
                 alt="my profile"
                 width={28}
                 height={28}
-                style={{ borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.7)" }}
+                style={{ borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.7)", width: 28, height: 28 }}
               />
             ) : (
               <CircleUser size={26} strokeWidth={1.5} />
