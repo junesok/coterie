@@ -155,10 +155,6 @@ export default function ProfileEditPage() {
     e.preventDefault();
 
     if (usernameStatus === "taken" || usernameStatus === "invalid") return;
-    if (!name.trim()) {
-      setMsg({ text: "Name cannot be empty.", ok: false });
-      return;
-    }
 
     setSaving(true);
     setMsg(null);
@@ -229,23 +225,6 @@ export default function ProfileEditPage() {
                 >
                   <span className="text-[10px] text-white">...</span>
                 </div>
-              )}
-              {/* Remove button */}
-              {avatarUrl && !uploading && (
-                <button
-                  type="button"
-                  onClick={handleRemoveAvatar}
-                  className="absolute -top-1 -right-1 flex items-center justify-center"
-                  style={{
-                    width: 20, height: 20, borderRadius: "50%",
-                    background: "var(--danger)",
-                    border: "1px solid #900",
-                    cursor: "pointer",
-                  }}
-                  title="Remove photo"
-                >
-                  <X size={11} color="#fff" strokeWidth={2.5} />
-                </button>
               )}
             </div>
             <div className="flex gap-2">
