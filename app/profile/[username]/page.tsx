@@ -226,16 +226,13 @@ export default function ProfilePage() {
           <>
             {posts.map((post) => <PostCard key={post.id} post={post} />)}
             {hasMore && (
-              <div className="flex justify-center py-4">
-                <button
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className="xp-btn text-xs"
-                  style={{ minWidth: 100 }}
-                >
-                  {loadingMore ? "Loading..." : "Load more"}
-                </button>
-              </div>
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="xp-btn w-[calc(100%-24px)] mx-3 my-2 text-sm"
+              >
+                {loadingMore ? "Loading..." : "Load more"}
+              </button>
             )}
           </>
         )}

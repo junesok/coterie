@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 // GET /api/users/[username] — 유저 프로필 + 게시물 목록 (cursor 페이징)
 // ?cursor=<postId>  — 이 ID 이후부터 조회
