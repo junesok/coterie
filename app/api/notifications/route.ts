@@ -14,23 +14,35 @@ export async function GET() {
 
   const userId = session.user.id;
 
-  // 대기 중인 친구 신청 알림 (별도 보존)
+  // PENDING 상태 친구 신청 알림 ID 조회 (정리 대상 제외용)
+  const pendingFriendships = await prisma.friendship.findMany({
+    where: { status: "PENDING", receiverId: userId },
+    select: { id: true },
+  });
+  const pendingFriendshipIds = pendingFriendships.map((f) => f.id);
+
+  // PENDING 친구 신청 알림 (별도 보존 — 정리 대상 제외)
   const pendingFriendRequests = await prisma.notification.findMany({
     where: {
       userId,
       type: "FRIEND_REQUEST",
+      friendshipId: { in: pendingFriendshipIds },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  // 나머지 알림 (FRIEND_REQUEST 제외)
+  // 정리 대상 알림 (PENDING 친구 신청 제외한 모든 알림)
+  const pendingNotifIds = pendingFriendRequests.map((n) => n.id);
   const others = await prisma.notification.findMany({
-    where: { userId, NOT: { type: "FRIEND_REQUEST" } },
+    where: {
+      userId,
+      NOT: { id: { in: pendingNotifIds } },
+    },
     orderBy: [{ isRead: "asc" }, { createdAt: "desc" }],
-    take: MAX_NOTIFICATIONS + 10, // 여유분 조회
+    take: MAX_NOTIFICATIONS + 10,
   });
 
-  // 20개 초과분 삭제
+  // 20개 초과분 삭제 (ACCEPTED/REJECTED 친구 신청 포함)
   if (others.length > MAX_NOTIFICATIONS) {
     const toDelete = others.slice(MAX_NOTIFICATIONS).map((n) => n.id);
     await prisma.notification.deleteMany({ where: { id: { in: toDelete } } });
