@@ -15,7 +15,7 @@ export async function GET() {
       where: { ownerId: session.user.id },
       orderBy: { createdAt: "asc" },
       include: {
-        usedBy: { select: { name: true } },
+        usedBy: { select: { name: true, username: true } },
       },
     });
 

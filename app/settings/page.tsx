@@ -13,7 +13,7 @@ interface InviteCode {
   id: string;
   code: string;
   isUsed: boolean;
-  usedBy: { name: string } | null;
+  usedBy: { name: string; username: string | null } | null;
 }
 
 export default function SettingsPage() {
@@ -28,6 +28,9 @@ export default function SettingsPage() {
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [codesLoading, setCodesLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
+  const [showAllCodes, setShowAllCodes] = useState(false);
+
+  const CODES_DEFAULT = 3;
 
   useEffect(() => {
     axios.get("/api/invite/my-codes")
@@ -93,42 +96,53 @@ export default function SettingsPage() {
             ) : codes.length === 0 ? (
               <p className="p-3 text-xs" style={{ color: "var(--text-sub)" }}>No invite codes yet.</p>
             ) : (
-              codes.map((code, i) => (
-                <div
-                  key={code.id}
-                  className="flex items-center justify-between px-3 py-2"
-                  style={{
-                    borderTop: i > 0 ? "1px solid var(--border)" : undefined,
-                    opacity: code.isUsed ? 0.5 : 1,
-                    background: "var(--bg-card)",
-                  }}
-                >
-                  <div className="flex flex-col gap-0.5">
-                    <span
-                      className="text-xs font-mono tracking-wider"
-                      style={{ color: code.isUsed ? "var(--text-sub)" : "var(--text-base)" }}
-                    >
-                      {code.code}
-                    </span>
-                    {code.isUsed && code.usedBy && (
-                      <span className="text-[10px]" style={{ color: "var(--text-sub)" }}>
-                        used by {code.usedBy.name}
-                      </span>
-                    )}
-                    {!code.isUsed && (
-                      <span className="text-[10px]" style={{ color: "var(--point)" }}>unused</span>
-                    )}
-                  </div>
-                  <button
-                    className="xp-btn flex items-center gap-1 text-xs py-0.5 px-2"
-                    onClick={() => handleCopy(code.code)}
-                    disabled={code.isUsed}
+              <>
+                {(showAllCodes ? codes : codes.slice(0, CODES_DEFAULT)).map((code, i) => (
+                  <div
+                    key={code.id}
+                    className="flex items-center justify-between px-3 py-2"
+                    style={{
+                      borderTop: i > 0 ? "1px solid var(--border)" : undefined,
+                      opacity: code.isUsed ? 0.5 : 1,
+                      background: "var(--bg-card)",
+                    }}
                   >
-                    <Copy size={11} strokeWidth={1.5} />
-                    {copied === code.code ? "copied!" : "copy link"}
+                    <div className="flex flex-col gap-0.5">
+                      <span
+                        className="text-xs font-mono tracking-wider"
+                        style={{ color: code.isUsed ? "var(--text-sub)" : "var(--text-base)" }}
+                      >
+                        {code.code}
+                      </span>
+                      {code.isUsed && code.usedBy && (
+                        <span className="text-[10px]" style={{ color: "var(--text-sub)" }}>
+                          used by {code.usedBy.name || code.usedBy.username || "unknown"}
+                        </span>
+                      )}
+                      {!code.isUsed && (
+                        <span className="text-[10px]" style={{ color: "var(--point)" }}>unused</span>
+                      )}
+                    </div>
+                    <button
+                      className="xp-btn flex items-center gap-1 text-xs py-0.5 px-2"
+                      onClick={() => handleCopy(code.code)}
+                      disabled={code.isUsed}
+                    >
+                      <Copy size={11} strokeWidth={1.5} />
+                      {copied === code.code ? "copied!" : "copy link"}
+                    </button>
+                  </div>
+                ))}
+                {codes.length > CODES_DEFAULT && (
+                  <button
+                    className="xp-btn text-xs w-full"
+                    style={{ borderTop: "1px solid var(--border)", borderRadius: 0 }}
+                    onClick={() => setShowAllCodes((v) => !v)}
+                  >
+                    {showAllCodes ? `show less` : `load more (${codes.length - CODES_DEFAULT} more)`}
                   </button>
-                </div>
-              ))
+                )}
+              </>
             )}
           </div>
         </div>
