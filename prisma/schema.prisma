@@ -27,6 +27,8 @@ model User {
   likes             Like[]
   notifications     Notification[] @relation("NotificationReceiver")
   moderationLogs    ModerationLog[]
+  friendsSent       Friendship[]   @relation("FriendshipSent")
+  friendsReceived   Friendship[]   @relation("FriendshipReceived")
   createdAt         DateTime       @default(now())
 }
 
@@ -51,15 +53,21 @@ model EmailVerification {
 }
 
 model Post {
-  id        String         @id @default(cuid())
-  content   String
-  author    User           @relation(fields: [authorId], references: [id])
-  authorId  String
-  images    PostImage[]
-  comments  Comment[]
-  likes     Like[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id         String          @id @default(cuid())
+  content    String
+  visibility PostVisibility  @default(PUBLIC)
+  author     User            @relation(fields: [authorId], references: [id])
+  authorId   String
+  images     PostImage[]
+  comments   Comment[]
+  likes      Like[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+enum PostVisibility {
+  PUBLIC
+  FRIENDS
 }
 
 model PostImage {
@@ -99,16 +107,17 @@ model Like {
 }
 
 model Notification {
-  id        String           @id @default(cuid())
-  type      NotificationType
-  userId    String           // 알림 수신자
-  user      User             @relation("NotificationReceiver", fields: [userId], references: [id])
-  actorId   String?          // 행동한 유저 (관리자 삭제 시 null 가능)
-  postId    String?
-  commentId String?
-  reason    ModerationReason?  // 관리자 삭제 시 사유
-  isRead    Boolean          @default(false)
-  createdAt DateTime         @default(now())
+  id           String           @id @default(cuid())
+  type         NotificationType
+  userId       String           // 알림 수신자
+  user         User             @relation("NotificationReceiver", fields: [userId], references: [id])
+  actorId      String?          // 행동한 유저
+  postId       String?
+  commentId    String?
+  friendshipId String?          // 친구 신청 알림용
+  reason       ModerationReason?
+  isRead       Boolean          @default(false)
+  createdAt    DateTime         @default(now())
 }
 
 model ModerationLog {
@@ -142,4 +151,25 @@ enum NotificationType {
   MENTION_COMMENT
   ADMIN_DELETE_POST
   ADMIN_DELETE_COMMENT
+  FRIEND_REQUEST
+  FRIEND_ACCEPT
+}
+
+model Friendship {
+  id         String           @id @default(cuid())
+  sender     User             @relation("FriendshipSent", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId   String
+  receiver   User             @relation("FriendshipReceived", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId String
+  status     FriendshipStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([senderId, receiverId])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }

@@ -28,6 +28,22 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]"
       return NextResponse.json({ success: false, error: "게시물을 찾을 수 없습니다." }, { status: 404 });
     }
 
+    // FRIENDS 게시물: 작성자 본인 또는 친구만 접근 가능
+    if (post.visibility === "FRIENDS" && post.authorId !== session.user.id) {
+      const friendship = await prisma.friendship.findFirst({
+        where: {
+          status: "ACCEPTED",
+          OR: [
+            { senderId: session.user.id, receiverId: post.authorId },
+            { senderId: post.authorId, receiverId: session.user.id },
+          ],
+        },
+      });
+      if (!friendship) {
+        return NextResponse.json({ success: false, error: "게시물을 찾을 수 없습니다." }, { status: 404 });
+      }
+    }
+
     const { likes, ...rest } = post;
     return NextResponse.json({
       success: true,
@@ -48,7 +64,7 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/posts/[id]">
     }
 
     const { id } = await ctx.params;
-    const { content, images } = await req.json();
+    const { content, images, visibility } = await req.json();
 
     const post = await prisma.post.findUnique({ where: { id } });
 
@@ -86,6 +102,7 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/posts/[id]">
         where: { id },
         data: {
           content: content?.trim() ?? "",
+          visibility: visibility === "FRIENDS" ? "FRIENDS" : "PUBLIC",
           images: images?.length
             ? { create: images.map((url: string, i: number) => ({ url, order: i })) }
             : undefined,

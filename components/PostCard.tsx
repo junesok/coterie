@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { MessageSquare, Heart } from "lucide-react";
+import { MessageSquare, Heart, Lock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { Avatar } from "@/components/Avatar";
@@ -11,15 +11,17 @@ interface PostCardProps {
   post: {
     id: string;
     content: string;
+    visibility?: string;
     createdAt: string | Date;
     author: { id: string; name: string; username?: string | null; avatarUrl?: string | null };
     images: { url: string; order: number }[];
     _count: { comments: number };
     likeCount?: number;
   };
+  showVisibilityBadge?: boolean;
 }
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, showVisibilityBadge = false }: PostCardProps) {
   const router = useRouter();
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
     addSuffix: true,
@@ -59,9 +61,14 @@ export function PostCard({ post }: PostCardProps) {
               {authorLabel}
             </span>
           </span>
-          <span className="text-[10px] ml-2 shrink-0" style={{ color: "rgba(255,255,255,0.8)" }}>
-            {timeAgo}
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {showVisibilityBadge && post.visibility === "FRIENDS" && (
+              <Lock size={10} strokeWidth={1.5} style={{ color: "rgba(255,255,255,0.7)" }} />
+            )}
+            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.8)" }}>
+              {timeAgo}
+            </span>
+          </div>
         </div>
 
         {/* 썸네일 이미지 */}

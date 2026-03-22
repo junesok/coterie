@@ -25,7 +25,13 @@ export async function GET(
         username: true,
         avatarUrl: true,
         createdAt: true,
-        _count: { select: { posts: true } },
+        _count: {
+          select: {
+            posts: true,
+            friendsSent: { where: { status: "ACCEPTED" } },
+            friendsReceived: { where: { status: "ACCEPTED" } },
+          },
+        },
       },
     });
 
@@ -33,14 +39,39 @@ export async function GET(
       return NextResponse.json({ success: false, error: "User not found." }, { status: 404 });
     }
 
+    // 비친구가 타인 프로필 볼 때 FRIENDS 게시물 숨김
+    const session2 = await getServerSession(authOptions);
+    const viewerId = session2?.user?.id;
+    const isSelf = viewerId === user.id;
+
+    let isFriend = false;
+    if (!isSelf && viewerId) {
+      const fs = await prisma.friendship.findFirst({
+        where: {
+          status: "ACCEPTED",
+          OR: [
+            { senderId: viewerId, receiverId: user.id },
+            { senderId: user.id, receiverId: viewerId },
+          ],
+        },
+      });
+      isFriend = !!fs;
+    }
+
+    const postWhere =
+      isSelf || isFriend
+        ? { authorId: user.id }
+        : { authorId: user.id, visibility: "PUBLIC" as const };
+
     const rawPosts = await prisma.post.findMany({
-      where: { authorId: user.id },
+      where: postWhere,
       orderBy: { createdAt: "desc" },
       take: PAGE_SIZE + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       select: {
         id: true,
         content: true,
+        visibility: true,
         createdAt: true,
         images: { select: { url: true, order: true }, orderBy: { order: "asc" } },
         _count: { select: { comments: true } },
@@ -59,6 +90,8 @@ export async function GET(
       likes: undefined,
     }));
 
+    const friendCount = user._count.friendsSent + user._count.friendsReceived;
+
     return NextResponse.json({
       success: true,
       user: {
@@ -68,6 +101,7 @@ export async function GET(
         avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
         postCount: user._count.posts,
+        friendCount,
       },
       posts,
       nextCursor,

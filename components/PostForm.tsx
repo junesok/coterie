@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { Globe, Users } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
 import { ImageUploader } from "@/components/ImageUploader";
 import { MentionInput } from "@/components/MentionInput";
@@ -10,12 +11,14 @@ import { MentionInput } from "@/components/MentionInput";
 interface PostFormProps {
   initialContent?: string;
   initialImages?: string[];
-  postId?: string; // 수정 모드일 때
+  initialVisibility?: "PUBLIC" | "FRIENDS";
+  postId?: string;
 }
 
-export function PostForm({ initialContent = "", initialImages = [], postId }: PostFormProps) {
+export function PostForm({ initialContent = "", initialImages = [], initialVisibility = "PUBLIC", postId }: PostFormProps) {
   const router = useRouter();
   const [content, setContent] = useState(initialContent);
+  const [visibility, setVisibility] = useState<"PUBLIC" | "FRIENDS">(initialVisibility);
 
   // 이미 Cloudinary에 있는 URL (수정 모드 초기값 or 빈 배열)
   const [uploadedUrls, setUploadedUrls] = useState<string[]>(initialImages);
@@ -102,10 +105,10 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
 
       // 2. 게시물 저장
       if (isEdit) {
-        await axios.put(`/api/posts/${postId}`, { content, images: allImages });
+        await axios.put(`/api/posts/${postId}`, { content, images: allImages, visibility });
         router.push(`/post/${postId}`);
       } else {
-        const res = await axios.post("/api/posts", { content, images: allImages });
+        const res = await axios.post("/api/posts", { content, images: allImages, visibility });
         router.push(`/post/${res.data.post.id}`);
       }
       router.refresh();
@@ -157,6 +160,36 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
               {content.length} / {MAX_CHARS}
             </span>
           </div>
+        </div>
+
+        {/* 공개 범위 토글 */}
+        <div className="flex items-center gap-1.5">
+          {(["PUBLIC", "FRIENDS"] as const).map((v) => {
+            const active = visibility === v;
+            return (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setVisibility(v)}
+                className="flex items-center gap-1 text-xs px-3 py-1"
+                style={{
+                  fontFamily: "Tahoma, sans-serif",
+                  fontWeight: active ? 700 : 400,
+                  color: active ? "var(--point)" : "var(--text-sub)",
+                  background: active ? "var(--bg-card)" : "transparent",
+                  border: active ? "1px solid var(--border)" : "1px solid transparent",
+                  borderRadius: 3,
+                  cursor: "pointer",
+                  boxShadow: active ? "inset 1px 1px #fff, inset -1px -1px var(--shadow-lo)" : "none",
+                }}
+              >
+                {v === "PUBLIC"
+                  ? <><Globe size={11} strokeWidth={1.5} /> All</>
+                  : <><Users size={11} strokeWidth={1.5} /> Friends</>
+                }
+              </button>
+            );
+          })}
         </div>
 
         {uploadProgress && (

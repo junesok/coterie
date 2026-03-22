@@ -6,7 +6,7 @@ import { createMentionNotifications } from "@/lib/notifications";
 
 const PAGE_SIZE = 5;
 
-// GET /api/posts?page=1 — 피드 목록 (최신순)
+// GET /api/posts?page=1&tab=all|friends — 피드 목록
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,12 +15,33 @@ export async function GET(req: NextRequest) {
     }
 
     const page = Number(req.nextUrl.searchParams.get("page") ?? "1");
+    const tab = req.nextUrl.searchParams.get("tab") ?? "all"; // "all" | "friends"
     const skip = (page - 1) * PAGE_SIZE;
-
     const userId = session.user.id;
+
+    // friends 탭: 내 친구 ID 목록 조회
+    let friendIds: string[] = [];
+    if (tab === "friends") {
+      const friendships = await prisma.friendship.findMany({
+        where: {
+          status: "ACCEPTED",
+          OR: [{ senderId: userId }, { receiverId: userId }],
+        },
+        select: { senderId: true, receiverId: true },
+      });
+      friendIds = friendships.map((f) => f.senderId === userId ? f.receiverId : f.senderId);
+    }
+
+    const where =
+      tab === "friends"
+        ? // 친구 탭: 친구들의 모든 게시물 (PUBLIC + FRIENDS)
+          { authorId: { in: friendIds } }
+        : // 전체 탭: PUBLIC 게시물만
+          { visibility: "PUBLIC" as const };
 
     const [posts, total] = await Promise.all([
       prisma.post.findMany({
+        where,
         orderBy: { createdAt: "desc" },
         skip,
         take: PAGE_SIZE,
@@ -31,7 +52,7 @@ export async function GET(req: NextRequest) {
           likes: { where: { userId }, select: { id: true } },
         },
       }),
-      prisma.post.count(),
+      prisma.post.count({ where }),
     ]);
 
     const postsWithLike = posts.map((p) => ({
@@ -60,7 +81,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
     }
 
-    const { content, images } = await req.json();
+    const { content, images, visibility } = await req.json();
 
     const hasContent = content && content.trim().length > 0;
     const hasImages = images && images.length > 0;
@@ -78,6 +99,7 @@ export async function POST(req: NextRequest) {
     const post = await prisma.post.create({
       data: {
         content: content?.trim() ?? "",
+        visibility: visibility === "FRIENDS" ? "FRIENDS" : "PUBLIC",
         authorId: session.user.id,
         images: images?.length
           ? {

@@ -13,6 +13,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   const [initialContent, setInitialContent] = useState<string | null>(null);
   const [initialImages, setInitialImages] = useState<string[]>([]);
+  const [initialVisibility, setInitialVisibility] = useState<"PUBLIC" | "FRIENDS">("PUBLIC");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         }
         setInitialContent(post.content);
         setInitialImages(post.images.map((img: { url: string }) => img.url));
+        setInitialVisibility(post.visibility === "FRIENDS" ? "FRIENDS" : "PUBLIC");
       }
     }).finally(() => setLoading(false));
   }, [id, session, router]);
@@ -40,6 +42,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     <PostForm
       initialContent={initialContent}
       initialImages={initialImages}
+      initialVisibility={initialVisibility}
       postId={id}
     />
   );

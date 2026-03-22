@@ -2,31 +2,36 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { PenLine, Settings } from "lucide-react";
+import { PenLine, Settings, Globe, Users } from "lucide-react";
 import axios from "axios";
 import { NavBar } from "@/components/NavBar";
 import { PostCard } from "@/components/PostCard";
 
+type Tab = "all" | "friends";
+
 interface Post {
   id: string;
   content: string;
+  visibility: string;
   createdAt: string;
-  author: { id: string; name: string };
+  author: { id: string; name: string; username?: string | null; avatarUrl?: string | null };
   images: { url: string; order: number }[];
   _count: { comments: number };
+  likeCount?: number;
 }
 
 export default function FeedPage() {
   const router = useRouter();
+  const [tab, setTab] = useState<Tab>("all");
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  const fetchPosts = useCallback(async (p: number) => {
+  const fetchPosts = useCallback(async (p: number, t: Tab) => {
     setLoading(true);
     try {
-      const res = await axios.get(`/api/posts?page=${p}`);
+      const res = await axios.get(`/api/posts?page=${p}&tab=${t}`);
       if (res.data.success) {
         setPosts((prev) => (p === 1 ? res.data.posts : [...prev, ...res.data.posts]));
         setTotalPages(res.data.pagination.totalPages);
@@ -37,13 +42,15 @@ export default function FeedPage() {
   }, []);
 
   useEffect(() => {
-    fetchPosts(1);
-  }, [fetchPosts]);
+    setPage(1);
+    setPosts([]);
+    fetchPosts(1, tab);
+  }, [tab, fetchPosts]);
 
   function loadMore() {
     const next = page + 1;
     setPage(next);
-    fetchPosts(next);
+    fetchPosts(next, tab);
   }
 
   return (
@@ -61,20 +68,48 @@ export default function FeedPage() {
         }
       />
 
+      {/* 탭 */}
+      <div
+        className="flex gap-1 px-3 pt-2 pb-1"
+        style={{ background: "var(--bg-page)", borderBottom: "1px solid var(--border)" }}
+      >
+        {(["all", "friends"] as Tab[]).map((t) => {
+          const active = tab === t;
+          return (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className="flex items-center gap-1 text-xs px-3 py-1"
+              style={{
+                fontFamily: "Tahoma, sans-serif",
+                fontWeight: active ? 700 : 400,
+                color: active ? "var(--point)" : "var(--text-sub)",
+                background: active ? "var(--bg-card)" : "transparent",
+                border: active ? "1px solid var(--border)" : "1px solid transparent",
+                borderRadius: 3,
+                cursor: "pointer",
+                boxShadow: active ? "inset 1px 1px #fff, inset -1px -1px var(--shadow-lo)" : "none",
+              }}
+            >
+              {t === "all"
+                ? <><Globe size={11} strokeWidth={1.5} /> All</>
+                : <><Users size={11} strokeWidth={1.5} /> Friends</>
+              }
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flex-1 overflow-y-auto py-3">
         {loading && posts.length === 0 ? (
-          <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>
-            Loading...
-          </p>
+          <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>Loading...</p>
         ) : posts.length === 0 ? (
           <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>
-            No posts yet.
+            {tab === "friends" ? "No posts from friends yet." : "No posts yet."}
           </p>
         ) : (
           <>
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
+            {posts.map((post) => <PostCard key={post.id} post={post} />)}
             {page < totalPages && (
               <button
                 onClick={loadMore}
@@ -88,7 +123,6 @@ export default function FeedPage() {
         )}
       </div>
 
-      {/* 새 글 작성 버튼 (우하단 고정 — 컨테이너 기준, 홈 바 회피) */}
       <button
         onClick={() => router.push("/post/new")}
         className="xp-btn fixed flex items-center gap-1.5 text-sm px-4 py-2 z-10"
