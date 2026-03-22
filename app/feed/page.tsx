@@ -70,7 +70,7 @@ export default function FeedPage() {
 
       {/* 탭 */}
       <div
-        className="flex gap-1 px-3 pt-2 pb-1"
+        className="flex gap-1.5 px-3 py-2"
         style={{ background: "var(--bg-page)", borderBottom: "1px solid var(--border)" }}
       >
         {(["all", "friends"] as Tab[]).map((t) => {
@@ -79,21 +79,22 @@ export default function FeedPage() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className="flex items-center gap-1 text-xs px-3 py-1"
+              className="flex items-center gap-1 text-[11px] px-2.5 py-0.5"
               style={{
                 fontFamily: "Tahoma, sans-serif",
                 fontWeight: active ? 700 : 400,
-                color: active ? "var(--point)" : "var(--text-sub)",
-                background: active ? "var(--bg-card)" : "transparent",
-                border: active ? "1px solid var(--border)" : "1px solid transparent",
-                borderRadius: 3,
+                color: active ? "#fff" : "var(--text-sub)",
+                background: active ? "var(--point)" : "var(--bg-card)",
+                border: "1px solid",
+                borderColor: active ? "var(--point)" : "var(--border)",
+                borderRadius: 999,
                 cursor: "pointer",
-                boxShadow: active ? "inset 1px 1px #fff, inset -1px -1px var(--shadow-lo)" : "none",
+                boxShadow: active ? "none" : "inset 1px 1px #fff, inset -1px -1px var(--shadow-lo)",
               }}
             >
               {t === "all"
-                ? <><Globe size={11} strokeWidth={1.5} /> All</>
-                : <><Users size={11} strokeWidth={1.5} /> Friends</>
+                ? <><Globe size={10} strokeWidth={1.5} /> All</>
+                : <><Users size={10} strokeWidth={1.5} /> Friends</>
               }
             </button>
           );

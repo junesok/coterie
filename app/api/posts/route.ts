@@ -34,9 +34,9 @@ export async function GET(req: NextRequest) {
 
     const where =
       tab === "friends"
-        ? // 친구 탭: 친구들의 모든 게시물 (PUBLIC + FRIENDS)
-          { authorId: { in: friendIds } }
-        : // 전체 탭: PUBLIC 게시물만
+        ? // 친구 탭: 친구 전용 게시물 (FRIENDS) — 친구 + 본인 작성
+          { visibility: "FRIENDS" as const, authorId: { in: [...friendIds, userId] } }
+        : // 전체 탭: 모든 공개 게시물 (PUBLIC)
           { visibility: "PUBLIC" as const };
 
     const [posts, total] = await Promise.all([
