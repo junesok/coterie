@@ -9,6 +9,7 @@ declare module "next-auth" {
       name: string;
       username?: string | null;
       isAdmin?: boolean;
+      avatarUrl?: string | null;
     };
   }
 }
@@ -18,5 +19,6 @@ declare module "next-auth/jwt" {
     id: string;
     username?: string | null;
     isAdmin?: boolean;
+    avatarUrl?: string | null;
   }
 }

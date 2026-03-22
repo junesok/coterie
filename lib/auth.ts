@@ -52,16 +52,22 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           username: user.username,
           isAdmin: user.isAdmin,
+          avatarUrl: user.avatarUrl ?? null,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: sessionUpdate }) {
       if (user) {
         token.id = user.id;
         token.username = (user as { username?: string | null }).username ?? null;
         token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
+        token.avatarUrl = (user as { avatarUrl?: string | null }).avatarUrl ?? null;
+      }
+      // session.update() 호출 시 avatarUrl 갱신
+      if (trigger === "update" && sessionUpdate?.avatarUrl !== undefined) {
+        token.avatarUrl = sessionUpdate.avatarUrl;
       }
       return token;
     },
@@ -70,6 +76,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.username = token.username as string | null | undefined;
         session.user.isAdmin = token.isAdmin as boolean | undefined;
+        session.user.avatarUrl = token.avatarUrl as string | null | undefined;
       }
       return session;
     },

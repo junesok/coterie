@@ -167,8 +167,8 @@ export default function ProfileEditPage() {
 
       await axios.put("/api/users/me", payload);
 
-      // Update session so navbar/etc reflect new username immediately
-      await updateSession();
+      // avatarUrl 포함해서 세션 갱신 → NavBar에 즉시 반영
+      await updateSession({ avatarUrl: avatarUrl });
 
       setMsg({ text: "Profile updated!", ok: true });
       originalUsername.current = username.toLowerCase();

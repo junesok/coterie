@@ -13,22 +13,6 @@ interface NavBarProps {
   showNotification?: boolean;
 }
 
-// 내 프로필 아바타 훅
-function useMyAvatar() {
-  const { data: session } = useSession();
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!session) return;
-    axios
-      .get("/api/users/me")
-      .then((res) => setAvatarUrl(res.data.user?.avatarUrl ?? null))
-      .catch(() => {});
-  }, [session]);
-
-  return avatarUrl;
-}
-
 // 미읽은 알림 수 폴링 훅 (30초 주기)
 function useUnreadCount(enabled: boolean) {
   const [count, setCount] = useState(0);
@@ -60,7 +44,7 @@ export function NavBar({
   const router = useRouter();
   const { data: session } = useSession();
   const unreadCount = useUnreadCount(showNotification);
-  const myAvatarUrl = useMyAvatar();
+  const myAvatarUrl = session?.user?.avatarUrl ?? null;
   const isAdmin = session?.user?.isAdmin;
   const username = session?.user?.username;
 
