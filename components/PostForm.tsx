@@ -26,6 +26,7 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
+  const MAX_CHARS = 500;
   const isEdit = !!postId;
 
   /** pendingFiles를 브라우저에서 Cloudinary로 직접 업로드 */
@@ -80,7 +81,22 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
     setLoading(true);
 
     try {
-      // 1. 선택된 파일이 있으면 Cloudinary에 업로드
+      // 1. 클라이언트 검증
+      const hasContent = content.trim().length > 0;
+      const hasPending = pendingFiles.length > 0;
+      const hasUploaded = uploadedUrls.length > 0;
+      if (!hasContent && !hasPending && !hasUploaded) {
+        setError("Write something or attach an image.");
+        setLoading(false);
+        return;
+      }
+      if (content.trim().length > MAX_CHARS) {
+        setError(`Content must be ${MAX_CHARS} characters or less.`);
+        setLoading(false);
+        return;
+      }
+
+      // 2. 선택된 파일이 있으면 Cloudinary에 업로드
       const newUrls = await uploadPendingFiles();
       const allImages = [...uploadedUrls, ...newUrls];
 
@@ -121,14 +137,27 @@ export function PostForm({ initialContent = "", initialImages = [], postId }: Po
         />
 
         {/* 텍스트 입력 — @mention 자동완성 포함 */}
-        <MentionInput
-          multiline
-          className="xp-input flex-1 resize-none min-h-[200px]"
-          placeholder="what's on your mind..."
-          value={content}
-          onChange={setContent}
-          dropdownDirection="down"
-        />
+        <div className="flex flex-col flex-1 gap-1">
+          <MentionInput
+            multiline
+            className="xp-input flex-1 resize-none min-h-[200px]"
+            placeholder="what's on your mind..."
+            value={content}
+            onChange={setContent}
+            dropdownDirection="down"
+          />
+          <div className="flex justify-end">
+            <span
+              className="text-[11px]"
+              style={{
+                color: content.length > MAX_CHARS ? "var(--danger)" : "var(--text-sub)",
+                fontFamily: "Tahoma, sans-serif",
+              }}
+            >
+              {content.length} / {MAX_CHARS}
+            </span>
+          </div>
+        </div>
 
         {uploadProgress && (
           <p className="text-xs" style={{ color: "var(--text-sub)" }}>{uploadProgress}</p>

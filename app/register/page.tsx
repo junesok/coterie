@@ -137,14 +137,15 @@ function RegisterForm() {
         <div className="p-5">
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div>
-              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>Name</label>
+              <label className="block text-xs mb-1" style={{ color: "var(--text-sub)" }}>
+                Name <span style={{ fontWeight: "normal" }}>(optional)</span>
+              </label>
               <input
                 type="text"
                 name="name"
                 className="xp-input"
                 value={form.name}
                 onChange={handleChange}
-                required
               />
             </div>
             <div>

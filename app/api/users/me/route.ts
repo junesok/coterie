@@ -78,8 +78,8 @@ export async function PUT(req: NextRequest) {
       avatarUrl?: string | null;
     } = {};
 
-    // 이름 변경
-    if (name && name.trim()) {
+    // 이름 변경 (빈값도 허용)
+    if (name !== undefined && name !== null) {
       updateData.name = name.trim();
     }
 

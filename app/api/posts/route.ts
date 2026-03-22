@@ -62,8 +62,13 @@ export async function POST(req: NextRequest) {
 
     const { content, images } = await req.json();
 
-    if (!content || content.trim() === "") {
-      return NextResponse.json({ success: false, error: "내용을 입력해 주세요." }, { status: 400 });
+    const hasContent = content && content.trim().length > 0;
+    const hasImages = images && images.length > 0;
+    if (!hasContent && !hasImages) {
+      return NextResponse.json({ success: false, error: "Write something or attach an image." }, { status: 400 });
+    }
+    if (hasContent && content.trim().length > 500) {
+      return NextResponse.json({ success: false, error: "Content must be 500 characters or less." }, { status: 400 });
     }
 
     if (images && images.length > 3) {
@@ -72,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     const post = await prisma.post.create({
       data: {
-        content: content.trim(),
+        content: content?.trim() ?? "",
         authorId: session.user.id,
         images: images?.length
           ? {

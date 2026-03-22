@@ -60,8 +60,13 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/posts/[id]">
       return NextResponse.json({ success: false, error: "수정 권한이 없습니다." }, { status: 403 });
     }
 
-    if (!content || content.trim() === "") {
-      return NextResponse.json({ success: false, error: "내용을 입력해 주세요." }, { status: 400 });
+    const hasContent = content && content.trim().length > 0;
+    const hasImages = images && images.length > 0;
+    if (!hasContent && !hasImages) {
+      return NextResponse.json({ success: false, error: "Write something or attach an image." }, { status: 400 });
+    }
+    if (hasContent && content.trim().length > 500) {
+      return NextResponse.json({ success: false, error: "Content must be 500 characters or less." }, { status: 400 });
     }
 
     // 기존 이미지 URL 수집 → Cloudinary + DB에서 삭제 후 새 이미지로 교체
@@ -80,7 +85,7 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/posts/[id]">
       return tx.post.update({
         where: { id },
         data: {
-          content: content.trim(),
+          content: content?.trim() ?? "",
           images: images?.length
             ? { create: images.map((url: string, i: number) => ({ url, order: i })) }
             : undefined,

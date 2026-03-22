@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const { name, username, email, password, inviteCode } = await req.json();
 
     // 입력값 검증
-    if (!name || !username || !email || !password || !inviteCode) {
+    if (!username || !email || !password || !inviteCode) {
       return NextResponse.json(
         { success: false, error: "모든 필드를 입력해 주세요." },
         { status: 400 }
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     const newUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          name,
+          name: name?.trim() || "",
           username: normalizedUsername,
           email,
           passwordHash,
