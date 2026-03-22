@@ -40,6 +40,10 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
 
     if (action === "reject") {
       await prisma.friendship.update({ where: { id }, data: { status: "REJECTED" } });
+      // 수신자 측의 친구 신청 알림 삭제
+      await prisma.notification.deleteMany({
+        where: { friendshipId: id, type: "FRIEND_REQUEST" },
+      });
       return NextResponse.json({ success: true });
     }
 
@@ -70,6 +74,11 @@ export async function DELETE(_req: NextRequest, { params }: Ctx) {
     }
 
     await prisma.friendship.delete({ where: { id } });
+
+    // 관련 친구 신청 알림 삭제 (양방향)
+    await prisma.notification.deleteMany({
+      where: { friendshipId: id, type: "FRIEND_REQUEST" },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
