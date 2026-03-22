@@ -36,6 +36,7 @@ interface NotificationItem {
   postId: string | null;
   commentId: string | null;
   friendshipId: string | null;
+  friendshipStatus: string | null;
   reason: string | null;
   actor: { id: string; username: string | null; name: string } | null;
 }
@@ -137,37 +138,40 @@ export default function NotificationsPage() {
         ) : notifications.length === 0 ? (
           <p className="text-sm text-center mt-8" style={{ color: "var(--text-sub)" }}>No notifications.</p>
         ) : (
-          <div className="flex flex-col gap-2">
-            {notifications.map((n) => (
+          <div className="xp-window overflow-hidden">
+            {notifications.map((n, i) => (
               <div
                 key={n.id}
-                className="xp-window p-3"
-                style={{ opacity: n.isRead ? 0.6 : 1 }}
+                style={{
+                  borderBottom: i < notifications.length - 1 ? "1px solid var(--border)" : "none",
+                  opacity: n.isRead ? 0.55 : 1,
+                  background: n.isRead ? "transparent" : "var(--bg-card)",
+                }}
               >
                 <div
-                  className="flex items-start justify-between gap-2"
+                  className="flex items-start justify-between gap-2 px-3 py-2.5"
                   onClick={() => handleClick(n)}
                   style={{ cursor: n.postId ? "pointer" : "default" }}
                 >
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 flex items-start gap-1.5">
                     {!n.isRead && (
                       <span
-                        className="inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle"
+                        className="mt-1 shrink-0 w-1.5 h-1.5 rounded-full"
                         style={{ background: "var(--point)" }}
                       />
                     )}
-                    <span className="text-xs" style={{ color: "var(--text-base)" }}>
+                    <span className="text-xs leading-relaxed" style={{ color: "var(--text-base)" }}>
                       {getNotificationMessage(n)}
                     </span>
                   </div>
-                  <span className="text-[11px] whitespace-nowrap" style={{ color: "var(--text-sub)" }}>
+                  <span className="text-[10px] whitespace-nowrap shrink-0 mt-0.5" style={{ color: "var(--text-sub)" }}>
                     {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: enUS })}
                   </span>
                 </div>
 
-                {/* 친구 신청 수락/거절 버튼 */}
-                {n.type === "FRIEND_REQUEST" && n.friendshipId && (
-                  <div className="flex gap-2 mt-2">
+                {/* 친구 신청 수락/거절 버튼 — PENDING 상태일 때만 표시 */}
+                {n.type === "FRIEND_REQUEST" && n.friendshipId && n.friendshipStatus === "PENDING" && (
+                  <div className="flex gap-2 px-3 pb-2.5">
                     <button
                       className="xp-btn text-xs flex items-center gap-1"
                       style={{ color: "var(--point)", borderColor: "var(--point)" }}

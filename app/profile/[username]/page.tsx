@@ -344,22 +344,29 @@ export default function ProfilePage() {
                 <X size={9} strokeWidth={2.5} />
               </button>
             </div>
-            <div className="overflow-y-auto flex-1 p-3 flex flex-col gap-2">
+            <div className="overflow-y-auto flex-1">
               {loadingFriends ? (
-                <p className="text-xs text-center mt-4" style={{ color: "var(--text-sub)" }}>Loading...</p>
+                <p className="text-xs text-center py-6" style={{ color: "var(--text-sub)" }}>Loading...</p>
               ) : friends.length === 0 ? (
-                <p className="text-xs text-center mt-4" style={{ color: "var(--text-sub)" }}>No friends yet.</p>
+                <p className="text-xs text-center py-6" style={{ color: "var(--text-sub)" }}>No friends yet.</p>
               ) : (
-                friends.map((f) => (
+                friends.map((f, i) => (
                   <button
                     key={f.id}
                     onClick={() => { setShowFriends(false); router.push(`/profile/${f.username}`); }}
-                    className="flex items-center gap-3 p-2 xp-window text-left"
-                    style={{ cursor: "pointer", width: "100%" }}
+                    className="flex items-center gap-3 px-4 py-3 w-full text-left"
+                    style={{
+                      cursor: "pointer",
+                      background: "transparent",
+                      border: "none",
+                      borderBottom: i < friends.length - 1 ? "1px solid var(--border)" : "none",
+                    }}
                   >
                     <Avatar avatarUrl={f.avatarUrl} username={f.username ?? f.name} size={36} />
                     <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-bold truncate" style={{ color: "var(--text-base)" }}>{f.name || f.username}</span>
+                      <span className="text-sm font-bold truncate" style={{ color: "var(--text-base)" }}>
+                        {f.name || f.username}
+                      </span>
                       {f.username && (
                         <span className="text-xs truncate" style={{ color: "var(--text-sub)" }}>@{f.username}</span>
                       )}

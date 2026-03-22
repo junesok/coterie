@@ -229,9 +229,10 @@ select,
 
 /* ── XP 창 컨트롤 버튼 (─ □ ✕) ── */
 .xp-ctrl-btn {
-  width: 16px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   border: 1px solid #ACA899;
+  border-radius: 5px;
   box-shadow: inset 1px 1px #FFFFFF, inset -1px -1px #848284;
   display: flex;
   align-items: center;
@@ -245,7 +246,9 @@ select,
 }
 
 .xp-ctrl-btn.close {
-  background: #CC0000;
+  background: linear-gradient(to bottom, #E85050 0%, #CC0000 50%, #AA0000 100%);
   color: #FFFFFF;
-  border-color: #990000;
+  border-color: #880000;
+  border-radius: 5px;
+  box-shadow: inset 1px 1px rgba(255,120,120,0.6), inset -1px -1px #7A0000;
 }
