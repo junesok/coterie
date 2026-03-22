@@ -39,6 +39,10 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [postCount, setPostCount] = useState(0);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,6 +55,9 @@ export default function ProfilePage() {
         if (res.data.success) {
           setProfile(res.data.user);
           setPosts(res.data.posts);
+          setHasMore(res.data.hasMore);
+          setNextCursor(res.data.nextCursor);
+          setPostCount(res.data.user.postCount ?? res.data.posts.length);
         } else {
           router.push("/feed");
         }
@@ -58,6 +65,21 @@ export default function ProfilePage() {
       .catch(() => router.push("/feed"))
       .finally(() => setLoading(false));
   }, [username, router]);
+
+  async function loadMore() {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await axios.get(`/api/users/${username}?cursor=${nextCursor}`);
+      if (res.data.success) {
+        setPosts((prev) => [...prev, ...res.data.posts]);
+        setHasMore(res.data.hasMore);
+        setNextCursor(res.data.nextCursor);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -190,7 +212,7 @@ export default function ProfilePage() {
 
         {/* 상태바 */}
         <div className="xp-statusbar">
-          <span>{posts.length} post{posts.length !== 1 ? "s" : ""}</span>
+          <span>{postCount} post{postCount !== 1 ? "s" : ""}</span>
         </div>
       </div>
 
@@ -201,7 +223,21 @@ export default function ProfilePage() {
             No posts yet.
           </p>
         ) : (
-          posts.map((post) => <PostCard key={post.id} post={post} />)
+          <>
+            {posts.map((post) => <PostCard key={post.id} post={post} />)}
+            {hasMore && (
+              <div className="flex justify-center py-4">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="xp-btn text-xs"
+                  style={{ minWidth: 100 }}
+                >
+                  {loadingMore ? "Loading..." : "Load more"}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
