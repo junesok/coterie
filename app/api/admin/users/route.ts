@@ -16,6 +16,8 @@ export async function GET() {
       name: true,
       isVerified: true,
       isAdmin: true,
+      isSuspended: true,
+      suspendedReason: true,
       createdAt: true,
       invitedBy: { select: { username: true, name: true } },
       _count: { select: { posts: true } },

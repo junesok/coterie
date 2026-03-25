@@ -16,7 +16,7 @@ export interface CommentData {
   isDeleted: boolean;
   isEdited: boolean;
   createdAt: string;
-  author: { id: string; name: string; username?: string | null; avatarUrl?: string | null };
+  author: { id: string; name: string; username?: string | null; avatarUrl?: string | null; isSuspended?: boolean };
   replies?: CommentData[];
 }
 
@@ -65,7 +65,10 @@ export function CommentItem({ comment, postId, isReply = false, onReplyStart, on
     <div className={`${isReply ? "ml-4 pl-3" : ""} py-2`}
       style={isReply ? { borderLeft: "2px solid var(--border)" } : undefined}
     >
-      {comment.isDeleted ? (
+      {comment.author.isSuspended ? (
+        // 정지된 계정의 댓글 — 자리 유지, 내용 숨김
+        <p className="text-xs italic" style={{ color: "var(--text-sub)" }}>This comment is from a suspended account.</p>
+      ) : comment.isDeleted ? (
         // 소프트 삭제된 댓글
         <p className="text-xs italic" style={{ color: "var(--text-sub)" }}>This comment was deleted.</p>
       ) : editing ? (

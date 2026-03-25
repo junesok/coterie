@@ -23,11 +23,11 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
       where: { postId, parentId: null },
       orderBy: { createdAt: "asc" },
       include: {
-        author: { select: { id: true, name: true, username: true, avatarUrl: true } },
+        author: { select: { id: true, name: true, username: true, avatarUrl: true, isSuspended: true } },
         replies: {
           orderBy: { createdAt: "asc" },
           include: {
-            author: { select: { id: true, name: true, username: true, avatarUrl: true } },
+            author: { select: { id: true, name: true, username: true, avatarUrl: true, isSuspended: true } },
           },
         },
       },

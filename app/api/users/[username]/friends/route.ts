@@ -26,14 +26,14 @@ export async function GET(
         OR: [{ senderId: user.id }, { receiverId: user.id }],
       },
       include: {
-        sender: { select: { id: true, name: true, username: true, avatarUrl: true } },
-        receiver: { select: { id: true, name: true, username: true, avatarUrl: true } },
+        sender: { select: { id: true, name: true, username: true, avatarUrl: true, isSuspended: true } },
+        receiver: { select: { id: true, name: true, username: true, avatarUrl: true, isSuspended: true } },
       },
     });
 
-    const friends = friendships.map((f) =>
-      f.senderId === user.id ? f.receiver : f.sender
-    );
+    const friends = friendships
+      .map((f) => f.senderId === user.id ? f.receiver : f.sender)
+      .filter((f) => !f.isSuspended);
 
     return NextResponse.json({ success: true, friends });
   } catch (error) {

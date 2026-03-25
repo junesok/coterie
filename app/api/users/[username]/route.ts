@@ -25,6 +25,7 @@ export async function GET(
         username: true,
         avatarUrl: true,
         createdAt: true,
+        isSuspended: true,
         _count: {
           select: {
             posts: true,
@@ -37,6 +38,10 @@ export async function GET(
 
     if (!user) {
       return NextResponse.json({ success: false, error: "User not found." }, { status: 404 });
+    }
+
+    if (user.isSuspended) {
+      return NextResponse.json({ success: false, error: "suspended", isSuspended: true }, { status: 403 });
     }
 
     // 비친구가 타인 프로필 볼 때 FRIENDS 게시물 숨김

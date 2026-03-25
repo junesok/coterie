@@ -49,6 +49,7 @@ export default function ProfilePage() {
   const username = params.username as string;
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isSuspended, setIsSuspended] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -87,7 +88,13 @@ export default function ProfilePage() {
           router.push("/feed");
         }
       })
-      .catch(() => router.push("/feed"))
+      .catch((err) => {
+        if (axios.isAxiosError(err) && err.response?.data?.isSuspended) {
+          setIsSuspended(true);
+        } else {
+          router.push("/feed");
+        }
+      })
       .finally(() => setLoading(false));
   }, [username, router]);
 
@@ -225,6 +232,27 @@ export default function ProfilePage() {
         {cfg.icon}
         {friendActionLoading ? "..." : cfg.label}
       </button>
+    );
+  }
+
+  if (isSuspended) {
+    return (
+      <div className="flex flex-col flex-1" style={{ background: "var(--bg-page)" }}>
+        <NavBar title="profile" showBack />
+        <div className="flex flex-col items-center justify-center flex-1 gap-3 p-8">
+          <div className="xp-window w-full max-w-xs">
+            <div className="xp-titlebar"><span>account suspended</span></div>
+            <div className="p-4 text-center">
+              <p className="text-sm" style={{ color: "var(--text-base)" }}>
+                This account has been suspended.
+              </p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-sub)" }}>
+                @{username}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
