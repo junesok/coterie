@@ -150,7 +150,11 @@ export async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/posts/[i
 
     const imageUrls = post.images.map((img) => img.url);
 
-    await prisma.post.delete({ where: { id } });
+    await prisma.$transaction([
+      // 해당 게시물과 연결된 알림 정리
+      prisma.notification.deleteMany({ where: { postId: id } }),
+      prisma.post.delete({ where: { id } }),
+    ]);
 
     // DB 삭제 완료 후 Cloudinary 이미지 삭제 (비동기, 실패 무시)
     if (imageUrls.length > 0) {

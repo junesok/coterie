@@ -34,8 +34,10 @@ export async function DELETE(
     );
   }
 
-  // 트랜잭션: 게시물 삭제 + ModerationLog 기록
+  // 트랜잭션: 관련 알림 삭제 + 게시물 삭제 + ModerationLog 기록
   await prisma.$transaction([
+    // 해당 게시물과 연결된 알림 정리 (댓글/좋아요 알림의 죽은 링크 방지)
+    prisma.notification.deleteMany({ where: { postId: id } }),
     prisma.post.delete({ where: { id } }),
     prisma.moderationLog.create({
       data: {
