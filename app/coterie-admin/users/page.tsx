@@ -21,6 +21,7 @@ interface AdminUser {
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [issuingId, setIssuingId] = useState<string | null>(null);
   const [suspendingId, setSuspendingId] = useState<string | null>(null);
@@ -72,15 +73,36 @@ export default function AdminUsers() {
     }
   }
 
+  const filtered = query.trim()
+    ? users.filter((u) => {
+        const q = query.toLowerCase();
+        return (
+          u.username?.toLowerCase().includes(q) ||
+          u.name?.toLowerCase().includes(q) ||
+          u.email?.toLowerCase().includes(q)
+        );
+      })
+    : users;
+
   if (loading) return <p className="text-sm" style={{ color: "var(--text-sub)" }}>불러오는 중...</p>;
 
   return (
     <div>
-      <h1 className="text-sm font-bold mb-4" style={{ color: "var(--text-base)" }}>
-        유저 관리 ({users.length}명)
-      </h1>
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-sm font-bold" style={{ color: "var(--text-base)" }}>
+          유저 관리 ({filtered.length}/{users.length}명)
+        </h1>
+      </div>
+      <input
+        className="xp-input text-sm w-full mb-3"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+      />
       <div className="flex flex-col gap-2">
-        {users.map((user) => (
+        {filtered.map((user) => (
           <div key={user.id} className="xp-window p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
