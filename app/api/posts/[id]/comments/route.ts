@@ -53,6 +53,9 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
     if (!content || content.trim() === "") {
       return NextResponse.json({ success: false, error: "내용을 입력해 주세요." }, { status: 400 });
     }
+    if (content.trim().length > 500) {
+      return NextResponse.json({ success: false, error: "댓글은 500자를 초과할 수 없습니다." }, { status: 400 });
+    }
 
     // 게시물 조회 (작성자 알림용)
     const post = await prisma.post.findUnique({ where: { id: postId } });

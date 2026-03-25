@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
     const isMention = req.nextUrl.searchParams.get("mention") === "1";
 
     if (!q) return NextResponse.json({ success: true, users: [] });
+    if (q.length > 100) return NextResponse.json({ success: false, error: "Query too long." }, { status: 400 });
 
     // @mention 자동완성 — username prefix 검색, 6명
     if (isMention) {

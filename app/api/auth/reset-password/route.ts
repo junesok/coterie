@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     if (!record || record.usedAt || record.expiresAt < new Date()) {
       return NextResponse.json(
-        { success: false, error: "Invalid or expired reset link.", code: "TOKEN_EXPIRED" },
+        { success: false, error: "Invalid or expired reset link." },
         { status: 400 }
       );
     }

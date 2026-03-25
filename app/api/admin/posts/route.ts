@@ -8,8 +8,8 @@ export async function GET(req: NextRequest) {
   if (error) return error;
 
   const page = Number(req.nextUrl.searchParams.get("page") ?? "1");
-  const pageSize = Number(req.nextUrl.searchParams.get("pageSize") ?? "20");
-  const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
+  const pageSize = Math.min(Number(req.nextUrl.searchParams.get("pageSize") ?? "20") || 20, 100);
+  const q = (req.nextUrl.searchParams.get("q")?.trim() ?? "").slice(0, 200);
   const skip = (page - 1) * pageSize;
 
   const where = q

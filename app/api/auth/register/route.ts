@@ -2,11 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { createInviteCodesForUser } from "@/lib/invite";
+import { rateLimit, getIp } from "@/lib/rate-limit";
 
 const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
 
 export async function POST(req: NextRequest) {
   try {
+    // IP당 10분에 5회 제한
+    const ip = getIp(req);
+    const rl = rateLimit(`register:${ip}`, 5, 10 * 60 * 1000);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const { name, username, email, password, inviteCode } = await req.json();
 
     // 입력값 검증

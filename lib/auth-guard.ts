@@ -40,11 +40,12 @@ export async function requireAuth() {
 }
 
 /**
- * 관리자 세션 확인
+ * 관리자 세션 확인 + DB 재확인
+ * JWT 캐시 공백(updateAge) 동안 권한이 회수된 경우를 커버
  */
 export async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.isAdmin) {
+  if (!session?.user?.id) {
     return {
       session: null,
       error: NextResponse.json(
@@ -53,5 +54,22 @@ export async function requireAdmin() {
       ),
     };
   }
+
+  // DB에서 최신 isAdmin 상태 직접 확인
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { isAdmin: true },
+  });
+
+  if (!dbUser?.isAdmin) {
+    return {
+      session: null,
+      error: NextResponse.json(
+        { success: false, error: "관리자 권한이 필요합니다.", code: "UNAUTHORIZED" },
+        { status: 403 }
+      ),
+    };
+  }
+
   return { session, error: null };
 }
