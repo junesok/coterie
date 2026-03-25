@@ -85,7 +85,7 @@ model Comment {
   postId    String
   author    User      @relation(fields: [authorId], references: [id])
   authorId  String
-  parent    Comment?  @relation("Replies", fields: [parentId], references: [id])
+  parent    Comment?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
   parentId  String?
   replies   Comment[] @relation("Replies")
   content   String?
