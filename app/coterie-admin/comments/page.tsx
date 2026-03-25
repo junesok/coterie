@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 const REASON_LABELS: Record<string, string> = {
   SEXUAL_CONTENT: "선정적 콘텐츠",
@@ -43,7 +43,6 @@ export default function AdminComments() {
   const [target, setTarget] = useState<AdminComment | null>(null);
   const [selectedReason, setSelectedReason] = useState("SPAM");
   const [deleting, setDeleting] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchComments = useCallback(async (page: number, ps: number, q: string) => {
     setLoading(true);
@@ -64,10 +63,9 @@ export default function AdminComments() {
     fetchComments(1, pageSize, query);
   }, []); // eslint-disable-line
 
-  function handleQueryChange(val: string) {
-    setQuery(val);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchComments(1, pageSize, val), 350);
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    fetchComments(1, pageSize, query);
   }
 
   function handlePageSizeChange(ps: number) {
@@ -114,13 +112,19 @@ export default function AdminComments() {
       </div>
 
       {/* 검색 */}
-      <input
-        className="xp-input text-sm w-full mb-3"
-        value={query}
-        onChange={(e) => handleQueryChange(e.target.value)}
-        placeholder="내용 검색..."
-        autoComplete="off"
-      />
+      <form onSubmit={handleSearch} className="flex gap-2 mb-3">
+        <input
+          className="xp-input text-sm flex-1"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="내용 검색..."
+          autoComplete="off"
+        />
+        <button type="submit" className="xp-btn text-xs flex items-center gap-1 shrink-0">
+          <Search size={12} strokeWidth={1.5} />
+          검색
+        </button>
+      </form>
 
       {/* 목록 */}
       {loading ? (
