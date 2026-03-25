@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Copy, Check, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Copy, Check, Plus, ExternalLink } from "lucide-react";
 import axios from "axios";
 
 interface DashboardData {
@@ -18,6 +19,7 @@ interface InviteCode {
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
@@ -73,6 +75,15 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* feed 이동 버튼 */}
+      <button
+        onClick={() => router.push("/feed")}
+        className="xp-btn text-xs flex items-center gap-1.5 self-start"
+      >
+        <ExternalLink size={12} strokeWidth={1.5} />
+        feed로 이동
+      </button>
+
       {/* 통계 */}
       <div>
         <h2 className="text-xs font-bold mb-2" style={{ color: "var(--text-sub)" }}>통계</h2>
