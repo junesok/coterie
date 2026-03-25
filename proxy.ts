@@ -2,13 +2,18 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 // 인증 없이 접근 가능한 경로
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/suspended"];
 
 // Next.js 16: middleware → proxy (함수명도 proxy로 변경)
 export const proxy = withAuth(
   function proxy(req) {
     const { pathname } = req.nextUrl;
     const token = req.nextauth?.token;
+
+    // 정지된 계정 → /suspended로 리다이렉트 (API 요청 제외)
+    if (token?.isSuspended && !pathname.startsWith("/api/") && pathname !== "/suspended") {
+      return NextResponse.redirect(new URL("/suspended", req.url));
+    }
 
     // 관리자 전용 경로: isAdmin이 아닐 경우 /feed로 리다이렉트
     if (pathname.startsWith("/coterie-admin")) {
