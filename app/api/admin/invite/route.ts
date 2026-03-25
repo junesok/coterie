@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/admin-guard";
+import { requireAdmin } from "@/lib/auth-guard";
 import { createInviteCodesForUser } from "@/lib/invite";
 
 // POST /api/admin/invite — 초대 코드 발급

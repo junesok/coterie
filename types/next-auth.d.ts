@@ -10,6 +10,7 @@ declare module "next-auth" {
       username?: string | null;
       isAdmin?: boolean;
       avatarUrl?: string | null;
+      isSuspended?: boolean;
     };
   }
 }
@@ -20,5 +21,6 @@ declare module "next-auth/jwt" {
     username?: string | null;
     isAdmin?: boolean;
     avatarUrl?: string | null;
+    isSuspended?: boolean;
   }
 }

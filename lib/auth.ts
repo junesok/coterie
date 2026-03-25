@@ -3,10 +3,13 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+const SUSPENDED_ROUTE = "/suspended";
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30일
+    maxAge: 30 * 24 * 60 * 60,  // 30일
+    updateAge: 5 * 60,           // 5분마다 JWT 갱신 → isSuspended 재확인
   },
   pages: {
     signIn: "/login",
@@ -53,6 +56,7 @@ export const authOptions: NextAuthOptions = {
           username: user.username,
           isAdmin: user.isAdmin,
           avatarUrl: user.avatarUrl ?? null,
+          isSuspended: user.isSuspended ?? false,
         };
       },
     }),
@@ -60,10 +64,19 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, trigger, session: sessionUpdate }) {
       if (user) {
+        // 최초 로그인 시 DB 값으로 채움
         token.id = user.id;
         token.username = (user as { username?: string | null }).username ?? null;
         token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
         token.avatarUrl = (user as { avatarUrl?: string | null }).avatarUrl ?? null;
+        token.isSuspended = (user as { isSuspended?: boolean }).isSuspended ?? false;
+      } else if (token.id) {
+        // updateAge 주기마다 DB에서 isSuspended 재확인
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { isSuspended: true },
+        });
+        token.isSuspended = dbUser?.isSuspended ?? false;
       }
       // session.update() 호출 시 avatarUrl 갱신
       if (trigger === "update" && sessionUpdate?.avatarUrl !== undefined) {
@@ -77,6 +90,7 @@ export const authOptions: NextAuthOptions = {
         session.user.username = token.username as string | null | undefined;
         session.user.isAdmin = token.isAdmin as boolean | undefined;
         session.user.avatarUrl = token.avatarUrl as string | null | undefined;
+        session.user.isSuspended = token.isSuspended as boolean | undefined;
       }
       return session;
     },

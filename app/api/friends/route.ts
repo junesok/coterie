@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-guard";
 
 // POST /api/friends — 친구 신청
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const { receiverId } = await req.json();
     if (!receiverId) return NextResponse.json({ success: false, error: "receiverId required" }, { status: 400 });

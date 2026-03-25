@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/admin-guard";
+import { requireAdmin } from "@/lib/auth-guard";
 import { ModerationReason } from "@/app/generated/prisma/client";
 import { createAdminDeleteNotification } from "@/lib/notifications";
 import { deleteImagesByUrls } from "@/lib/cloudinary";

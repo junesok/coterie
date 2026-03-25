@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteImagesByUrls } from "@/lib/cloudinary";
+import { requireAuth } from "@/lib/auth-guard";
 
 // GET /api/posts/[id] — 게시물 상세
 export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]">) {
@@ -58,10 +59,8 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]"
 // PUT /api/posts/[id] — 게시물 수정 (본인만)
 export async function PUT(req: NextRequest, ctx: RouteContext<"/api/posts/[id]">) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const { id } = await ctx.params;
     const { content, images, visibility } = await req.json();
@@ -129,10 +128,8 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/posts/[id]">
 // DELETE /api/posts/[id] — 게시물 삭제 (본인만)
 export async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]">) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const { id } = await ctx.params;
     const post = await prisma.post.findUnique({

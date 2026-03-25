@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/admin-guard";
+import { requireAdmin } from "@/lib/auth-guard";
 
 // PUT /api/admin/users/[id] — 계정 정지 / 해제
 export async function PUT(

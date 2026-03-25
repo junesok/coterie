@@ -7,6 +7,7 @@ import {
   createReplyNotifications,
   createMentionNotifications,
 } from "@/lib/notifications";
+import { requireAuth } from "@/lib/auth-guard";
 
 // GET /api/posts/[id]/comments — 댓글 + 답글 목록
 export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]/comments">) {
@@ -43,10 +44,8 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
 // POST /api/posts/[id]/comments — 댓글 또는 답글 작성
 export async function POST(req: NextRequest, ctx: RouteContext<"/api/posts/[id]/comments">) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const { id: postId } = await ctx.params;
     const { content, parentId } = await req.json();

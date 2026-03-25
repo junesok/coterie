@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/admin-guard";
+import { requireAdmin } from "@/lib/auth-guard";
 
 // GET /api/admin/posts — 전체 게시물 목록
 export async function GET(req: NextRequest) {

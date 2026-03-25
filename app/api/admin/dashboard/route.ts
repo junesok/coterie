@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/admin-guard";
+import { requireAdmin } from "@/lib/auth-guard";
 
 // GET /api/admin/dashboard — 통계 요약
 export async function GET() {

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createMentionNotifications } from "@/lib/notifications";
+import { requireAuth } from "@/lib/auth-guard";
 
 const PAGE_SIZE = 5;
 
@@ -74,10 +75,8 @@ export async function GET(req: NextRequest) {
 // POST /api/posts — 게시물 작성
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const { content, images, visibility } = await req.json();
 
