@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-guard";
 
 // PUT /api/comments/[id] — 댓글 수정 (isEdited = true)
 export async function PUT(req: NextRequest, ctx: RouteContext<"/api/comments/[id]">) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const { id } = await ctx.params;
     const { content } = await req.json();
@@ -45,10 +42,8 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/comments/[id
 // 핸드오프 규칙: 답글 있으면 소프트 삭제, 없으면 하드 삭제
 export async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/comments/[id]">) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const { id } = await ctx.params;
     const comment = await prisma.comment.findUnique({

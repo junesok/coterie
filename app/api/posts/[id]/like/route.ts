@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createLikeNotification } from "@/lib/notifications";
+import { requireAuth } from "@/lib/auth-guard";
 
 // POST /api/posts/[id]/like — 좋아요 추가
 export async function POST(
   _req: NextRequest,
   ctx: RouteContext<"/api/posts/[id]/like">
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
-  }
+  const { session, error } = await requireAuth();
+  if (error || !session) return error;
 
   const { id: postId } = await ctx.params;
 
@@ -47,10 +44,8 @@ export async function DELETE(
   _req: NextRequest,
   ctx: RouteContext<"/api/posts/[id]/like">
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
-  }
+  const { session, error } = await requireAuth();
+  if (error || !session) return error;
 
   const { id: postId } = await ctx.params;
 

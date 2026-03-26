@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { createHash } from "crypto";
+import { requireAuth } from "@/lib/auth-guard";
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME!;
 const API_KEY = process.env.CLOUDINARY_API_KEY!;
@@ -18,10 +17,8 @@ function sign(params: Record<string, string>): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ success: false, error: "인증이 필요합니다." }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const formData = await req.formData();
     const files = formData.getAll("images") as File[];

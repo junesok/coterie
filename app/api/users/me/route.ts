@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { requireAuth } from "@/lib/auth-guard";
 
 // Cloudinary 이미지 삭제 (public_id 추출 후 REST API 호출)
 async function deleteCloudinaryImage(url: string) {
@@ -64,10 +65,8 @@ const RESERVED_USERNAMES = ["coterie_admin"];
 // PUT /api/users/me — 이름 / 유저네임 / 비밀번호 / 테마 / avatarUrl 변경
 export async function PUT(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const { name, username, currentPassword, newPassword, theme, avatarUrl } = await req.json();
     const updateData: {

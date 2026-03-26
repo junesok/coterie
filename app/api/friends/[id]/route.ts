@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 // PUT /api/friends/[id] — 수락(accept) 또는 거절(reject)
 export async function PUT(req: NextRequest, { params }: Ctx) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const { id } = await params;
     const { action } = await req.json(); // "accept" | "reject"
@@ -57,8 +56,8 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
 // DELETE /api/friends/[id] — 취소(PENDING, 신청자만) 또는 삭제(ACCEPTED, 양측 가능)
 export async function DELETE(_req: NextRequest, { params }: Ctx) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const { session, error } = await requireAuth();
+    if (error || !session) return error;
 
     const { id } = await params;
 
