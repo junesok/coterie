@@ -78,9 +78,10 @@ export const authOptions: NextAuthOptions = {
         });
         token.isSuspended = dbUser?.isSuspended ?? false;
       }
-      // session.update() 호출 시 avatarUrl 갱신
-      if (trigger === "update" && sessionUpdate?.avatarUrl !== undefined) {
-        token.avatarUrl = sessionUpdate.avatarUrl;
+      // session.update() 호출 시 avatarUrl / username 갱신
+      if (trigger === "update") {
+        if (sessionUpdate?.avatarUrl !== undefined) token.avatarUrl = sessionUpdate.avatarUrl;
+        if (sessionUpdate?.username !== undefined) token.username = sessionUpdate.username;
       }
       return token;
     },
