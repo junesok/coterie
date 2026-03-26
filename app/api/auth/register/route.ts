@@ -28,9 +28,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (password.length < 8) {
+    if (password.length < 8 || password.length > 72) {
       return NextResponse.json(
-        { success: false, error: "비밀번호는 8자 이상이어야 합니다." },
+        { success: false, error: "비밀번호는 8자 이상 72자 이하이어야 합니다." },
         { status: 400 }
       );
     }
@@ -60,8 +60,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 이메일 중복 확인
-    const existingEmail = await prisma.user.findUnique({ where: { email } });
+    // 이메일 중복 확인 (대소문자 무관하게 동일 이메일 처리)
+    const normalizedEmail = email.toLowerCase();
+    const existingEmail = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingEmail) {
       return NextResponse.json(
         { success: false, error: "이미 사용 중인 이메일입니다." },
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
         data: {
           name: name?.trim() || "",
           username: normalizedUsername,
-          email,
+          email: normalizedEmail,
           passwordHash,
           isVerified: true,
           invitedById: invite.ownerId,

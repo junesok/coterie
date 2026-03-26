@@ -1,13 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createHash } from "crypto";
+import { rateLimit } from "@/lib/rate-limit";
 
 // POST /api/upload/sign — Cloudinary 서명 발급 (실제 업로드는 브라우저가 직접 수행)
-export async function POST() {
+export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+  }
+
+  // 사용자당 1분에 20회 제한 (Cloudinary 쿼터 보호)
+  const rl = rateLimit(`upload-sign:${session.user.id}`, 20, 60 * 1000);
+  if (!rl.ok) {
+    return NextResponse.json({ error: "Too many upload requests. Please try again later." }, { status: 429 });
   }
 
   const timestamp = Math.floor(Date.now() / 1000).toString();

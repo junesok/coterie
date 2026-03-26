@@ -118,6 +118,13 @@ export async function PUT(req: NextRequest) {
 
     // 프로필 이미지 변경
     if (avatarUrl !== undefined) {
+      // null(삭제)이 아닌 경우 Cloudinary URL인지 검증
+      if (avatarUrl !== null && !avatarUrl.startsWith("https://res.cloudinary.com/")) {
+        return NextResponse.json(
+          { success: false, error: "Invalid avatar URL." },
+          { status: 400 }
+        );
+      }
       // 기존 이미지가 Cloudinary에 있으면 삭제
       const current = await prisma.user.findUnique({
         where: { id: session.user.id },
@@ -137,9 +144,9 @@ export async function PUT(req: NextRequest) {
           { status: 400 }
         );
       }
-      if (newPassword.length < 8) {
+      if (newPassword.length < 8 || newPassword.length > 72) {
         return NextResponse.json(
-          { success: false, error: "New password must be at least 8 characters." },
+          { success: false, error: "New password must be 8–72 characters." },
           { status: 400 }
         );
       }

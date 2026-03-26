@@ -1,8 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import type { ReactNode } from "react";
 
-// 관리자 레이아웃 — XP 스타일 사이드바
-export default function AdminLayout({ children }: { children: ReactNode }) {
+// 관리자 레이아웃 — 비관리자 접근 차단
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    redirect("/feed");
+  }
+
   return (
     <div className="flex flex-col min-h-screen" style={{ background: "var(--bg-page)" }}>
       {/* 관리자 상단 타이틀바 */}
