@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomInt } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendRegisterVerificationCode } from "@/lib/mailer";
 import { rateLimit, getIp } from "@/lib/rate-limit";
@@ -33,8 +34,8 @@ export async function POST(req: NextRequest) {
     // 기존 미인증 코드 삭제
     await prisma.tempEmailVerification.deleteMany({ where: { email: normalizedEmail } });
 
-    // 6자리 코드 생성
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    // 6자리 코드 생성 (암호학적으로 안전한 난수)
+    const code = String(randomInt(100000, 1000000));
 
     await prisma.tempEmailVerification.create({
       data: {

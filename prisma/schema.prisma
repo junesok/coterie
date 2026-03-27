@@ -61,6 +61,7 @@ model TempEmailVerification {
   email     String
   code      String   // 6자리 숫자 코드
   verified  Boolean  @default(false)
+  attempts  Int      @default(0) // 잘못된 코드 입력 횟수 (5회 초과 시 삭제)
   expiresAt DateTime
   createdAt DateTime @default(now())
 

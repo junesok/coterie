@@ -38,7 +38,23 @@ export async function POST(req: NextRequest) {
     }
 
     if (record.code !== String(code).trim()) {
-      return NextResponse.json({ success: false, error: "인증 코드가 올바르지 않습니다." }, { status: 400 });
+      // 실패 횟수 증가, 5회 초과 시 레코드 삭제 (재요청 강제)
+      const attempts = (record.attempts ?? 0) + 1;
+      if (attempts >= 5) {
+        await prisma.tempEmailVerification.delete({ where: { id: record.id } });
+        return NextResponse.json(
+          { success: false, error: "인증 시도 횟수를 초과했습니다. 인증 코드를 다시 요청해 주세요.", expired: true },
+          { status: 400 }
+        );
+      }
+      await prisma.tempEmailVerification.update({
+        where: { id: record.id },
+        data: { attempts },
+      });
+      return NextResponse.json(
+        { success: false, error: `인증 코드가 올바르지 않습니다. (${attempts}/5)` },
+        { status: 400 }
+      );
     }
 
     // 인증 완료 표시
