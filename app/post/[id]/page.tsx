@@ -143,8 +143,8 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* 스크롤 영역 */}
           <div className="flex-1 overflow-y-auto pb-20">
-            {/* 이미지 캐러셀 */}
-            <ImageCarousel images={post.images} />
+            {/* 이미지 캐러셀 — 탭하면 라이트박스 */}
+            <ImageCarousel images={post.images} enableLightbox />
 
             {/* 본문 */}
             <div className="p-4">
