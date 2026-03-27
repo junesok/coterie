@@ -28,7 +28,7 @@ export async function sendRegisterVerificationCode(
       "",
       `  ${code}`,
       "",
-      "This code expires in 15 minutes.",
+      "This code expires in 10 minutes.",
       "If you didn't request this, ignore this email.",
       "",
       "— coterie",

@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       data: {
         email: normalizedEmail,
         code,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15분
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10분
       },
     });
 
