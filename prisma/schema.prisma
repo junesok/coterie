@@ -55,6 +55,18 @@ model EmailVerification {
   usedAt    DateTime?
 }
 
+// 가입 전 이메일 인증용 임시 테이블 (계정 생성 전)
+model TempEmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  code      String   // 6자리 숫자 코드
+  verified  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
 model Post {
   id         String          @id @default(cuid())
   content    String

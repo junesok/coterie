@@ -82,6 +82,18 @@ export async function POST(req: NextRequest) {
     // 비밀번호 해싱
     const passwordHash = await bcrypt.hash(password, 12);
 
+    // 이메일 사전 인증 확인
+    const tempVerification = await prisma.tempEmailVerification.findFirst({
+      where: { email: normalizedEmail, verified: true },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!tempVerification || new Date() > tempVerification.expiresAt) {
+      return NextResponse.json(
+        { success: false, error: "이메일 인증을 먼저 완료해 주세요." },
+        { status: 400 }
+      );
+    }
+
     // 트랜잭션: 유저 생성 + 초대코드 사용 처리
     const newUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -105,6 +117,9 @@ export async function POST(req: NextRequest) {
 
     // 신규 가입자에게 초대 코드 3개 즉시 지급
     await createInviteCodesForUser(newUser.id, 3);
+
+    // 임시 인증 레코드 정리
+    await prisma.tempEmailVerification.deleteMany({ where: { email: normalizedEmail } });
 
     return NextResponse.json(
       { success: true, message: "가입 완료." },

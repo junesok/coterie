@@ -11,6 +11,32 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
+ * 회원가입 이메일 인증코드 발송
+ */
+export async function sendRegisterVerificationCode(
+  to: string,
+  code: string
+): Promise<void> {
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to,
+    subject: "your coterie sign-up code",
+    text: [
+      "Hey,",
+      "",
+      "Here's your sign-up verification code:",
+      "",
+      `  ${code}`,
+      "",
+      "This code expires in 15 minutes.",
+      "If you didn't request this, ignore this email.",
+      "",
+      "— coterie",
+    ].join("\n"),
+  });
+}
+
+/**
  * 비밀번호 재설정 인증번호 발송
  */
 export async function sendPasswordResetCode(
