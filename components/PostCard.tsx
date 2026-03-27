@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MessageSquare, Heart, Lock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -73,12 +74,14 @@ export function PostCard({ post, showVisibilityBadge = false }: PostCardProps) {
 
         {/* 썸네일 이미지 */}
         {post.images.length > 0 && (
-          <div className="relative" style={{ borderBottom: "1px solid var(--border)" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          <div className="relative" style={{ borderBottom: "1px solid var(--border)", height: 144 }}>
+            <Image
               src={post.images[0].url}
               alt="게시물 이미지"
-              className="w-full h-36 object-cover"
+              fill
+              sizes="(max-width: 390px) 100vw, 390px"
+              style={{ objectFit: "cover" }}
+              priority={false}
             />
             {post.images.length > 1 && (
               <div

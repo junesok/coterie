@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface AvatarProps {
   avatarUrl?: string | null;
   username?: string | null;
@@ -8,6 +10,8 @@ interface AvatarProps {
 }
 
 export function Avatar({ avatarUrl, username, size = 40, className = "" }: AvatarProps) {
+  const src = avatarUrl || "/default-profile.png";
+
   return (
     <div
       className={className}
@@ -19,13 +23,16 @@ export function Avatar({ avatarUrl, username, size = 40, className = "" }: Avata
         border: "1px solid var(--border)",
         flexShrink: 0,
         background: "var(--bg-card)",
+        position: "relative",
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={avatarUrl || "/default-profile.png"}
+      <Image
+        src={src}
         alt={username ?? "profile"}
-        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        fill
+        sizes={`${size}px`}
+        style={{ objectFit: "cover" }}
+        unoptimized={!avatarUrl} // 로컬 기본 이미지는 최적화 불필요
       />
     </div>
   );
