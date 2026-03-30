@@ -35,8 +35,8 @@ export async function GET(req: NextRequest) {
 
     const where =
       tab === "friends"
-        ? { visibility: "FRIENDS" as const, authorId: { in: [...friendIds, userId] }, author: { isSuspended: false } }
-        : { visibility: "PUBLIC" as const, author: { isSuspended: false } };
+        ? { visibility: "FRIENDS" as const, authorId: { in: [...friendIds, userId] }, author: { isSuspended: false }, isHidden: false }
+        : { visibility: "PUBLIC" as const, author: { isSuspended: false }, isHidden: false };
 
     const [posts, total] = await Promise.all([
       prisma.post.findMany({

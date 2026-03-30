@@ -25,7 +25,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]"
       },
     });
 
-    if (!post) {
+    if (!post || post.isHidden) {
       return NextResponse.json({ success: false, error: "게시물을 찾을 수 없습니다." }, { status: 404 });
     }
 

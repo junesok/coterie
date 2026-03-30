@@ -23,7 +23,13 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       skip,
       take: pageSize,
-      include: {
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        isHidden: true,
+        hiddenAt: true,
+        isDeleted: true,
         author: { select: { id: true, username: true, name: true, isSuspended: true } },
         post: { select: { id: true, content: true } },
       },

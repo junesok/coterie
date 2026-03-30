@@ -21,11 +21,12 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]/
 
     // 최상위 댓글만 조회 (parentId = null), 답글은 replies로 중첩
     const comments = await prisma.comment.findMany({
-      where: { postId, parentId: null },
+      where: { postId, parentId: null, isHidden: false },
       orderBy: { createdAt: "asc" },
       include: {
         author: { select: { id: true, name: true, username: true, avatarUrl: true, isSuspended: true } },
         replies: {
+          where: { isHidden: false },
           orderBy: { createdAt: "asc" },
           include: {
             author: { select: { id: true, name: true, username: true, avatarUrl: true, isSuspended: true } },
