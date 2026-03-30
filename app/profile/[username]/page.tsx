@@ -324,6 +324,15 @@ export default function ProfilePage() {
           >
             {friendCount} friend{friendCount !== 1 ? "s" : ""}
           </button>
+          {isOwn && (
+            <button
+              onClick={() => router.push("/activity")}
+              className="text-xs"
+              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--point)", padding: 0, fontFamily: "Tahoma, sans-serif", marginLeft: "auto" }}
+            >
+              내 활동 →
+            </button>
+          )}
         </div>
       </div>
 
