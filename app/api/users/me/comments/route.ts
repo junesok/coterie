@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const cursor = searchParams.get("cursor");
-  const limit = Math.min(Number(searchParams.get("limit")) || 20, 50);
+  const limit = Math.min(Number(searchParams.get("limit")) || 10, 50);
 
   const comments = await prisma.comment.findMany({
     where: {

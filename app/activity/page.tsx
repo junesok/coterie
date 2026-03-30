@@ -37,8 +37,8 @@ type CommentItem = {
   };
 };
 
-const LIMIT_LIKES = 15;
-const LIMIT_COMMENTS = 20;
+const LIMIT_LIKES = 5;
+const LIMIT_COMMENTS = 10;
 
 export default function ActivityPage() {
   const router = useRouter();
