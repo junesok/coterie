@@ -6,15 +6,37 @@ const API_SECRET  = process.env.CLOUDINARY_API_SECRET!;
 
 /**
  * Cloudinary URL에서 public_id 추출
- * 예) https://res.cloudinary.com/dwhsrs6bj/image/upload/q_auto,f_auto/coterie/abc123.jpg
+ * 예) https://res.cloudinary.com/cloud/image/upload/v1710000000/coterie/abc123.jpg
+ *  → coterie/abc123
+ * 예) https://res.cloudinary.com/cloud/image/upload/q_auto,f_auto/coterie/abc123.jpg
  *  → coterie/abc123
  */
 export function extractPublicId(url: string): string | null {
   try {
-    // /upload/ 이후의 경로에서 버전(v1234567/)과 변환(q_auto,f_auto/) 제거
-    const match = url.match(/\/upload\/(?:(?:v\d+|[a-z_,]+:[a-zA-Z0-9]+(?:,[a-z_,]+:[a-zA-Z0-9]+)*)\/)*(.+?)(?:\.[a-z]+)?$/);
-    if (!match) return null;
-    return match[1]; // ex) "coterie/abc123"
+    const uploadIdx = url.indexOf("/upload/");
+    if (uploadIdx === -1) return null;
+
+    let path = url.slice(uploadIdx + 8); // "/upload/".length === 8
+
+    // 버전 prefix 제거: v1234567890/
+    path = path.replace(/^v\d+\//, "");
+
+    // 변환 파라미터 제거: 세그먼트에 '_' 또는 ',' 포함 시 변환으로 간주
+    // e.g. "q_auto,f_auto/" → 제거, "coterie/" → 유지
+    const segments = path.split("/");
+    const cleaned: string[] = [];
+    for (const seg of segments) {
+      // 변환 세그먼트 패턴: 언더스코어+알파벳 조합이거나 콤마 포함 (q_auto, f_auto, w_400 등)
+      // 실제 폴더/파일명은 이런 패턴이 없으므로 안전하게 제거 가능
+      if (/^[a-z_,]+$/.test(seg) && (seg.includes("_") || seg.includes(","))) continue;
+      cleaned.push(seg);
+    }
+    path = cleaned.join("/");
+
+    // 파일 확장자 제거 (.jpg, .png, .webp 등)
+    path = path.replace(/\.[a-zA-Z0-9]+$/, "");
+
+    return path || null;
   } catch {
     return null;
   }

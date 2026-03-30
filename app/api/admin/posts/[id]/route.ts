@@ -141,9 +141,9 @@ export async function DELETE(
     }),
   ]);
 
-  // Cloudinary 이미지 완전 삭제 (비동기)
+  // Cloudinary 이미지 완전 삭제 — 반드시 await (서버리스 함수 종료 전에 완료)
   if (imageUrls.length > 0) {
-    deleteImagesByUrls(imageUrls).catch(() => {});
+    await deleteImagesByUrls(imageUrls);
   }
 
   return NextResponse.json({ success: true });
