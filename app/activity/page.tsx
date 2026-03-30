@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, MessageCircle } from "lucide-react";
+import Image from "next/image";
 import { NavBar } from "@/components/NavBar";
 import { PostCard } from "@/components/PostCard";
 import { Avatar } from "@/components/Avatar";
@@ -32,6 +33,7 @@ type CommentItem = {
     id: string;
     content: string;
     author: { username: string | null; avatarUrl: string | null };
+    images?: { url: string; order: number }[];
   };
 };
 
@@ -54,7 +56,6 @@ export default function ActivityPage() {
   const [commentsHasMore, setCommentsHasMore] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
 
-  // 좋아요 목록 조회
   const fetchLikes = useCallback(async (cursor?: string) => {
     setLikesLoading(true);
     try {
@@ -66,13 +67,12 @@ export default function ActivityPage() {
       setLikesCursor(nextCursor);
       setLikesHasMore(!!nextCursor);
     } catch {
-      // 조용히 처리
+      // silent
     } finally {
       setLikesLoading(false);
     }
   }, []);
 
-  // 댓글 목록 조회
   const fetchComments = useCallback(async (cursor?: string) => {
     setCommentsLoading(true);
     try {
@@ -84,13 +84,13 @@ export default function ActivityPage() {
       setCommentsCursor(nextCursor);
       setCommentsHasMore(!!nextCursor);
     } catch {
-      // 조용히 처리
+      // silent
     } finally {
       setCommentsLoading(false);
     }
   }, []);
 
-  // 탭 전환 시 초기화 후 로딩
+  // 탭 전환 시 초기화
   useEffect(() => {
     if (tab === "likes") {
       setLikes([]);
@@ -106,13 +106,13 @@ export default function ActivityPage() {
   }, [tab, fetchLikes, fetchComments]);
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: "likes", label: "좋아요", icon: <Heart size={10} strokeWidth={1.5} /> },
-    { key: "comments", label: "댓글", icon: <MessageCircle size={10} strokeWidth={1.5} /> },
+    { key: "likes", label: "Liked", icon: <Heart size={10} strokeWidth={1.5} /> },
+    { key: "comments", label: "Comments", icon: <MessageCircle size={10} strokeWidth={1.5} /> },
   ];
 
   return (
     <div className="flex flex-col flex-1" style={{ background: "var(--bg-page)" }}>
-      <NavBar title="내 활동" showBack />
+      <NavBar title="my activity" showBack />
 
       {/* 탭 */}
       <div
@@ -147,25 +147,20 @@ export default function ActivityPage() {
 
       {/* 콘텐츠 */}
       <div className="flex-1 overflow-y-auto py-3">
+
+        {/* ── 좋아요 탭 ── */}
         {tab === "likes" && (
           <>
             {likesLoading && likes.length === 0 ? (
-              <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>
-                Loading...
-              </p>
+              <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>Loading...</p>
             ) : likes.length === 0 ? (
-              <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>
-                아직 좋아요한 게시물이 없어요.
-              </p>
+              <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>No liked posts yet.</p>
             ) : (
               <>
                 {likes.map((item) => (
                   <PostCard
                     key={item.id}
-                    post={{
-                      ...item.post,
-                      likeCount: item.post._count.likes,
-                    }}
+                    post={{ ...item.post, likeCount: item.post._count.likes }}
                     showVisibilityBadge
                   />
                 ))}
@@ -183,25 +178,26 @@ export default function ActivityPage() {
           </>
         )}
 
+        {/* ── 댓글 탭 ── */}
         {tab === "comments" && (
           <>
             {commentsLoading && comments.length === 0 ? (
-              <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>
-                Loading...
-              </p>
+              <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>Loading...</p>
             ) : comments.length === 0 ? (
-              <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>
-                아직 작성한 댓글이 없어요.
-              </p>
+              <p className="text-center text-sm mt-8" style={{ color: "var(--text-sub)" }}>No comments yet.</p>
             ) : (
               <>
-                {comments.map((item) => (
-                  <CommentCard
-                    key={item.id}
-                    item={item}
-                    onClick={() => router.push(`/post/${item.post.id}`)}
-                  />
-                ))}
+                <div className="flex flex-col gap-0 mx-2">
+                  {comments.map((item, i) => (
+                    <CommentRow
+                      key={item.id}
+                      item={item}
+                      isFirst={i === 0}
+                      isLast={i === comments.length - 1 && !commentsHasMore}
+                      onClick={() => router.push(`/post/${item.post.id}`)}
+                    />
+                  ))}
+                </div>
                 {commentsHasMore && (
                   <button
                     onClick={() => fetchComments(commentsCursor ?? undefined)}
@@ -220,60 +216,142 @@ export default function ActivityPage() {
   );
 }
 
-function CommentCard({
+function CommentRow({
   item,
+  isFirst,
+  isLast,
   onClick,
 }: {
   item: CommentItem;
+  isFirst: boolean;
+  isLast: boolean;
   onClick: () => void;
 }) {
   const timeAgo = formatDistanceToNow(new Date(item.createdAt), { addSuffix: true });
-  const postPreview = item.post.content?.slice(0, 80) ?? "";
+  const postPreview = item.post.content?.slice(0, 60) ?? "";
+  const thumb = item.post.images?.[0]?.url ?? null;
+
+  const borderRadius = isFirst && isLast
+    ? "3px"
+    : isFirst
+      ? "3px 3px 0 0"
+      : isLast
+        ? "0 0 3px 3px"
+        : "0";
 
   return (
     <div
       onClick={onClick}
-      className="xp-window mx-2 mb-2 cursor-pointer"
-      style={{ userSelect: "none" }}
+      style={{
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+        borderBottom: isLast ? "1px solid var(--border)" : "none",
+        borderRadius,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "stretch",
+        gap: 0,
+        boxShadow: isFirst ? "inset 0 1px #fff" : undefined,
+        userSelect: "none",
+      }}
     >
-      <div className="p-3 flex flex-col gap-1.5">
+      {/* 왼쪽: 메인 콘텐츠 */}
+      <div style={{ flex: 1, padding: "8px 10px", minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
         {/* 게시물 작성자 + 미리보기 */}
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
           <Avatar
             avatarUrl={item.post.author.avatarUrl}
             username={item.post.author.username ?? ""}
-            size={16}
+            size={14}
           />
           <span
-            className="text-[11px] font-bold shrink-0"
-            style={{ color: "var(--text-base)" }}
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "var(--text-base)",
+              fontFamily: "Tahoma, sans-serif",
+              whiteSpace: "nowrap",
+            }}
           >
             @{item.post.author.username}
           </span>
           <span
-            className="text-[11px] truncate"
-            style={{ color: "var(--text-sub)" }}
+            style={{
+              fontSize: 11,
+              color: "var(--text-sub)",
+              fontFamily: "Tahoma, sans-serif",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
           >
             · {postPreview}
           </span>
         </div>
 
-        {/* 내 댓글 내용 */}
-        <div className="flex items-end justify-between gap-2">
+        {/* 내 댓글 */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 4,
+            paddingLeft: 4,
+            borderLeft: "2px solid var(--point)",
+          }}
+        >
           <p
-            className="text-xs leading-snug"
-            style={{ color: "var(--text-base)" }}
+            style={{
+              fontSize: 12,
+              color: "var(--text-base)",
+              fontFamily: "Tahoma, sans-serif",
+              lineHeight: 1.4,
+              margin: 0,
+              wordBreak: "break-word",
+            }}
           >
-            └ {item.content}
+            {item.content}
           </p>
-          <span
-            className="text-[10px] shrink-0"
-            style={{ color: "var(--text-sub)" }}
-          >
-            {timeAgo}
-          </span>
         </div>
+
+        {/* 날짜 */}
+        <span
+          style={{
+            fontSize: 10,
+            color: "var(--text-sub)",
+            fontFamily: "Tahoma, sans-serif",
+          }}
+        >
+          {timeAgo}
+        </span>
       </div>
+
+      {/* 오른쪽: 이미지 썸네일 (있을 때만) */}
+      {thumb && (
+        <div
+          style={{
+            width: 56,
+            flexShrink: 0,
+            position: "relative",
+            borderLeft: "1px solid var(--border)",
+            overflow: "hidden",
+            borderRadius: isFirst && isLast
+              ? "0 3px 3px 0"
+              : isFirst
+                ? "0 3px 0 0"
+                : isLast
+                  ? "0 0 3px 0"
+                  : "0",
+          }}
+        >
+          <Image
+            src={thumb}
+            alt="post image"
+            fill
+            sizes="56px"
+            style={{ objectFit: "cover" }}
+          />
+        </div>
+      )}
     </div>
   );
 }

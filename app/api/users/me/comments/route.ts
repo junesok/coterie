@@ -29,6 +29,11 @@ export async function GET(req: NextRequest) {
           author: {
             select: { username: true, avatarUrl: true },
           },
+          images: {
+            select: { url: true, order: true },
+            orderBy: { order: "asc" },
+            take: 1,
+          },
         },
       },
     },

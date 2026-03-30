@@ -330,7 +330,7 @@ export default function ProfilePage() {
               className="text-xs"
               style={{ background: "none", border: "none", cursor: "pointer", color: "var(--point)", padding: 0, fontFamily: "Tahoma, sans-serif", marginLeft: "auto" }}
             >
-              내 활동 →
+              my activity →
             </button>
           )}
         </div>
