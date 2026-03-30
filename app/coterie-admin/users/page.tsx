@@ -25,8 +25,14 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [issuingId, setIssuingId] = useState<string | null>(null);
   const [suspendingId, setSuspendingId] = useState<string | null>(null);
+
+  // 정지 모달
   const [suspendModal, setSuspendModal] = useState<{ userId: string; username: string } | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
+
+  // 계정 삭제 확인 모달
+  const [deleteModal, setDeleteModal] = useState<{ userId: string; username: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     axios.get("/api/admin/users").then((res) => {
@@ -70,6 +76,20 @@ export default function AdminUsers() {
       alert("발급 실패");
     } finally {
       setIssuingId(null);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (!deleteModal) return;
+    setDeleting(true);
+    try {
+      await axios.delete(`/api/admin/users/${deleteModal.userId}`);
+      setUsers((prev) => prev.filter((u) => u.id !== deleteModal.userId));
+      setDeleteModal(null);
+    } catch {
+      alert("계정 삭제 실패");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -129,6 +149,7 @@ export default function AdminUsers() {
                   </p>
                 )}
               </div>
+
               {!user.isAdmin && (
                 <div className="flex flex-col gap-1 shrink-0">
                   <button
@@ -138,15 +159,25 @@ export default function AdminUsers() {
                   >
                     {issuingId === user.id ? "발급 중..." : "초대 발급"}
                   </button>
+
                   {user.isSuspended ? (
-                    <button
-                      onClick={() => handleUnsuspend(user.id)}
-                      disabled={suspendingId === user.id}
-                      className="xp-btn text-xs whitespace-nowrap"
-                      style={{ color: "var(--point)" }}
-                    >
-                      {suspendingId === user.id ? "처리 중..." : "정지 해제"}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleUnsuspend(user.id)}
+                        disabled={suspendingId === user.id}
+                        className="xp-btn text-xs whitespace-nowrap"
+                        style={{ color: "var(--point)" }}
+                      >
+                        {suspendingId === user.id ? "처리 중..." : "정지 해제"}
+                      </button>
+                      <button
+                        onClick={() => setDeleteModal({ userId: user.id, username: user.username ?? user.name })}
+                        className="xp-btn text-xs whitespace-nowrap"
+                        style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
+                      >
+                        계정 삭제
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={() => setSuspendModal({ userId: user.id, username: user.username ?? user.name })}
@@ -200,6 +231,43 @@ export default function AdminUsers() {
                   onClick={() => handleSuspend(suspendModal.userId, suspendReason)}
                 >
                   {suspendingId === suspendModal.userId ? "처리 중..." : "정지"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 계정 완전 삭제 확인 모달 */}
+      {deleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "rgba(0,0,0,0.5)" }}>
+          <div className="xp-window w-72">
+            <div className="xp-titlebar">
+              <span>계정 완전 삭제</span>
+              <button className="xp-ctrl-btn close" onClick={() => setDeleteModal(null)} />
+            </div>
+            <div className="p-4 flex flex-col gap-3">
+              <p className="text-xs" style={{ color: "var(--text-base)" }}>
+                <strong>@{deleteModal.username}</strong> 계정과 모든 데이터를 완전히 삭제합니다.
+              </p>
+              <ul className="text-[11px] flex flex-col gap-0.5" style={{ color: "var(--text-sub)" }}>
+                <li>· 게시물 및 이미지 (Cloudinary 포함)</li>
+                <li>· 댓글, 좋아요, 알림</li>
+                <li>· 프로필 사진 (Cloudinary 포함)</li>
+                <li>· 친구 관계, 초대 코드</li>
+              </ul>
+              <p className="text-[11px] font-bold" style={{ color: "var(--danger)" }}>
+                이 작업은 되돌릴 수 없습니다.
+              </p>
+              <div className="flex gap-2 justify-end">
+                <button className="xp-btn text-xs" onClick={() => setDeleteModal(null)}>취소</button>
+                <button
+                  className="xp-btn text-xs"
+                  style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
+                  disabled={deleting}
+                  onClick={handleDeleteAccount}
+                >
+                  {deleting ? "삭제 중..." : "완전 삭제"}
                 </button>
               </div>
             </div>
