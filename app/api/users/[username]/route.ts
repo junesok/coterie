@@ -71,8 +71,8 @@ export async function GET(
 
     const postWhere =
       isSelf || isFriend
-        ? { authorId: user.id }
-        : { authorId: user.id, visibility: "PUBLIC" as const };
+        ? { authorId: user.id, isHidden: false, deletedAt: null }
+        : { authorId: user.id, visibility: "PUBLIC" as const, isHidden: false, deletedAt: null };
 
     const rawPosts = await prisma.post.findMany({
       where: postWhere,

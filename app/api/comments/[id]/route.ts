@@ -39,7 +39,9 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/comments/[id
 }
 
 // DELETE /api/comments/[id] — 댓글 삭제
-// 핸드오프 규칙: 답글 있으면 소프트 삭제, 없으면 하드 삭제
+// 신고 대기 중: 내용 보존 soft delete (isDeleted=true, content 유지)
+// 신고 없음 + 답글 있음: 내용 null soft delete
+// 신고 없음 + 답글 없음: hard delete
 export async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/comments/[id]">) {
   try {
     const { session, error } = await requireAuth();
@@ -52,27 +54,37 @@ export async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/comments
     });
 
     if (!comment) {
-      return NextResponse.json({ success: false, error: "댓글을 찾을 수 없습니다." }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Comment not found." }, { status: 404 });
     }
-
     if (comment.authorId !== session.user.id) {
-      return NextResponse.json({ success: false, error: "삭제 권한이 없습니다." }, { status: 403 });
+      return NextResponse.json({ success: false, error: "You don't have permission to delete this comment." }, { status: 403 });
     }
 
-    if (comment._count.replies > 0) {
-      // 답글 있는 경우: 소프트 삭제 (내용 null, isDeleted = true)
+    const pendingReportCount = await prisma.report.count({
+      where: { targetType: "COMMENT", targetId: id, status: "PENDING" },
+    });
+    const hasPendingReport = pendingReportCount > 0;
+
+    if (hasPendingReport) {
+      // 신고 대기 중: 내용 보존 (관리자가 원본 확인 필요), isDeleted = true
+      await prisma.comment.update({
+        where: { id },
+        data: { isDeleted: true },
+      });
+    } else if (comment._count.replies > 0) {
+      // 답글 있음: 내용 null soft delete
       await prisma.comment.update({
         where: { id },
         data: { content: null, isDeleted: true },
       });
     } else {
-      // 답글 없는 경우: 하드 삭제
+      // 신고 없음 + 답글 없음: hard delete
       await prisma.comment.delete({ where: { id } });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[DELETE /api/comments/[id]]", error);
-    return NextResponse.json({ success: false, error: "서버 오류가 발생했습니다." }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Something went wrong." }, { status: 500 });
   }
 }

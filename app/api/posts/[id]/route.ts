@@ -25,8 +25,8 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]"
       },
     });
 
-    if (!post || post.isHidden) {
-      return NextResponse.json({ success: false, error: "게시물을 찾을 수 없습니다." }, { status: 404 });
+    if (!post || post.isHidden || post.deletedAt) {
+      return NextResponse.json({ success: false, error: "Post not found." }, { status: 404 });
     }
 
     // FRIENDS 게시물: 작성자 본인 또는 친구만 접근 가능
@@ -126,6 +126,7 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/posts/[id]">
 }
 
 // DELETE /api/posts/[id] — 게시물 삭제 (본인만)
+// 신고가 걸려 있으면 soft delete (Cloudinary 유지), 없으면 hard delete
 export async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/posts/[id]">) {
   try {
     const { session, error } = await requireAuth();
@@ -138,29 +139,38 @@ export async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/posts/[i
     });
 
     if (!post) {
-      return NextResponse.json({ success: false, error: "게시물을 찾을 수 없습니다." }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Post not found." }, { status: 404 });
     }
-
     if (post.authorId !== session.user.id) {
-      return NextResponse.json({ success: false, error: "삭제 권한이 없습니다." }, { status: 403 });
+      return NextResponse.json({ success: false, error: "You don't have permission to delete this post." }, { status: 403 });
     }
 
-    const imageUrls = post.images.map((img) => img.url);
+    const pendingReportCount = await prisma.report.count({
+      where: { targetType: "POST", targetId: id, status: "PENDING" },
+    });
+    const hasPendingReport = pendingReportCount > 0;
 
-    await prisma.$transaction([
-      // 해당 게시물과 연결된 알림 정리
-      prisma.notification.deleteMany({ where: { postId: id } }),
-      prisma.post.delete({ where: { id } }),
-    ]);
-
-    // Cloudinary 이미지 완전 삭제 — 반드시 await (서버리스 함수 종료 전에 완료)
-    if (imageUrls.length > 0) {
-      await deleteImagesByUrls(imageUrls);
+    if (hasPendingReport) {
+      // 신고 대기 중 → soft delete (피드에서 숨김, DB·Cloudinary 보존)
+      await prisma.post.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+    } else {
+      // 신고 없음 → hard delete
+      const imageUrls = post.images.map((img) => img.url);
+      await prisma.$transaction([
+        prisma.notification.deleteMany({ where: { postId: id } }),
+        prisma.post.delete({ where: { id } }),
+      ]);
+      if (imageUrls.length > 0) {
+        await deleteImagesByUrls(imageUrls);
+      }
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[DELETE /api/posts/[id]]", error);
-    return NextResponse.json({ success: false, error: "서버 오류가 발생했습니다." }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Something went wrong." }, { status: 500 });
   }
 }

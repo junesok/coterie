@@ -31,6 +31,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           { href: "/coterie-admin/users", label: "유저" },
           { href: "/coterie-admin/posts", label: "게시물" },
           { href: "/coterie-admin/comments", label: "댓글" },
+          { href: "/coterie-admin/reports", label: "신고" },
           { href: "/coterie-admin/logs", label: "조치 기록" },
           { href: "/coterie-admin/deleted-accounts", label: "탈퇴 계정" },
         ].map(({ href, label }) => (

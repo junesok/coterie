@@ -31,6 +31,7 @@ model User {
   likes             Like[]
   notifications     Notification[] @relation("NotificationReceiver")
   moderationLogs    ModerationLog[]
+  reports           Report[]       @relation("ReportSubmitter")
   friendsSent       Friendship[]   @relation("FriendshipSent")
   friendsReceived   Friendship[]   @relation("FriendshipReceived")
   createdAt         DateTime       @default(now())
@@ -80,6 +81,7 @@ model Post {
   likes      Like[]
   isHidden   Boolean         @default(false)  // 관리자 숨김 (soft delete)
   hiddenAt   DateTime?
+  deletedAt  DateTime?       // 사용자 삭제 요청 (soft delete, 신고가 있으면 보존)
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
 }
@@ -195,4 +197,39 @@ enum FriendshipStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  reporter    User         @relation("ReportSubmitter", fields: [reporterId], references: [id])
+  reporterId  String
+  targetType  ReportTarget
+  targetId    String       // Post.id or Comment.id
+  reason      ReportReason
+  status      ReportStatus @default(PENDING)
+  resolvedAt  DateTime?
+  resolvedById String?     // adminId
+  createdAt   DateTime     @default(now())
+
+  @@unique([reporterId, targetType, targetId]) // 같은 콘텐츠 중복 신고 방지
+}
+
+enum ReportTarget {
+  POST
+  COMMENT
+}
+
+enum ReportReason {
+  SEXUAL_CONTENT
+  HATE_SPEECH
+  SPAM
+  VIOLENCE
+  PRIVACY_VIOLATION
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  DISMISSED
+  ACTIONED
 }

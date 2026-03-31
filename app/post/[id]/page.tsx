@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { Heart, Lock } from "lucide-react";
+import { Heart, Lock, Flag } from "lucide-react";
 import axios from "axios";
 import { NavBar } from "@/components/NavBar";
 import { Avatar } from "@/components/Avatar";
@@ -39,6 +39,10 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [liking, setLiking] = useState(false);
+  const [reportModal, setReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reporting, setReporting] = useState(false);
+  const [reportMsg, setReportMsg] = useState<string | null>(null);
 
   // 댓글 입력
   const [commentText, setCommentText] = useState("");
@@ -125,6 +129,21 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
     setCommentText("");
   }
 
+  async function handleReport() {
+    if (!reportReason) return;
+    setReporting(true);
+    setReportMsg(null);
+    try {
+      await axios.post("/api/reports", { targetType: "POST", targetId: id, reason: reportReason });
+      setReportMsg("Your report has been submitted.");
+    } catch (err) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.error : "Something went wrong.";
+      setReportMsg(msg);
+    } finally {
+      setReporting(false);
+    }
+  }
+
   const isOwner = session?.user?.id === post?.author.id;
   const replyTargetAuthor = replyToId ? comments.find((c) => c.id === replyToId)?.author : null;
   const replyTarget = replyTargetAuthor
@@ -185,7 +204,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                     </div>
                   </div>
                 </a>
-                {isOwner && (
+                {isOwner ? (
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => router.push(`/post/${id}/edit`)}
@@ -222,6 +241,22 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                       delete
                     </button>
                   </div>
+                ) : (
+                  <button
+                    onClick={() => { setReportModal(true); setReportReason(""); setReportMsg(null); }}
+                    className="flex items-center gap-1 text-xs"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "var(--text-sub)",
+                      padding: "3px 4px",
+                      fontFamily: "Tahoma, sans-serif",
+                    }}
+                  >
+                    <Flag size={11} strokeWidth={1.5} />
+                    report
+                  </button>
                 )}
               </div>
               <p className="text-sm" style={{ color: "var(--text-base)" }}>
@@ -336,6 +371,52 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
           onCancel={() => setShowDeleteDialog(false)}
           danger
         />
+      )}
+
+      {reportModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "rgba(0,0,0,0.5)" }}>
+          <div className="xp-window w-72">
+            <div className="xp-titlebar">
+              <span>report post</span>
+              <button className="xp-ctrl-btn close" onClick={() => setReportModal(false)} />
+            </div>
+            <div className="p-4 flex flex-col gap-3">
+              {reportMsg ? (
+                <>
+                  <p className="text-xs" style={{ color: "var(--text-base)" }}>{reportMsg}</p>
+                  <button className="xp-btn text-xs self-end" onClick={() => setReportModal(false)}>close</button>
+                </>
+              ) : (
+                <>
+                  <select
+                    className="xp-input text-xs"
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                  >
+                    <option value="">select a reason</option>
+                    <option value="SEXUAL_CONTENT">sexual content</option>
+                    <option value="HATE_SPEECH">hate speech</option>
+                    <option value="SPAM">spam</option>
+                    <option value="VIOLENCE">violence</option>
+                    <option value="PRIVACY_VIOLATION">privacy violation</option>
+                    <option value="OTHER">other</option>
+                  </select>
+                  <div className="flex gap-2 justify-end">
+                    <button className="xp-btn text-xs" onClick={() => setReportModal(false)}>cancel</button>
+                    <button
+                      className="xp-btn text-xs"
+                      style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
+                      disabled={!reportReason || reporting}
+                      onClick={handleReport}
+                    >
+                      {reporting ? "submitting..." : "submit report"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
