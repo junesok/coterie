@@ -1,154 +1,44 @@
 "use client";
 
-import { use, useEffect, useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { use, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { Heart, Lock, Flag } from "lucide-react";
-import axios from "axios";
+import { Heart, Lock, Flag, Pencil, Trash2 } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
 import { Avatar } from "@/components/Avatar";
-import { Pencil, Trash2 } from "lucide-react";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { XpDialog } from "@/components/XpDialog";
-import { CommentItem, type CommentData } from "@/components/CommentItem";
+import { CommentItem } from "@/components/CommentItem";
 import { MentionInput } from "@/components/MentionInput";
 import { MentionText } from "@/components/MentionText";
-
-interface Post {
-  id: string;
-  content: string;
-  createdAt: string;
-  visibility: "PUBLIC" | "FRIENDS";
-  author: { id: string; name: string; username?: string | null; avatarUrl?: string | null };
-  images: { url: string; order: number }[];
-  _count: { comments: number };
-  likeCount: number;
-  isLiked: boolean;
-}
+import { usePostDetail, useLike, useCommentSection, usePostReport } from "./hooks";
 
 export default function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: session } = useSession();
   const router = useRouter();
 
-  const [post, setPost] = useState<Post | null>(null);
-  const [comments, setComments] = useState<CommentData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [liking, setLiking] = useState(false);
-  const [reportModal, setReportModal] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [reporting, setReporting] = useState(false);
-  const [reportMsg, setReportMsg] = useState<string | null>(null);
-
-  // 댓글 입력
-  const [commentText, setCommentText] = useState("");
-  const [replyToId, setReplyToId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const fetchPost = useCallback(async () => {
-    const res = await axios.get(`/api/posts/${id}`);
-    if (res.data.success) setPost(res.data.post);
-  }, [id]);
-
-  const fetchComments = useCallback(async () => {
-    const res = await axios.get(`/api/posts/${id}/comments`);
-    if (res.data.success) setComments(res.data.comments);
-  }, [id]);
+  const { post, setPost, loading, setLoading, fetchPost, showDeleteDialog, setShowDeleteDialog, deleting, handleDeletePost } = usePostDetail(id);
+  const { liking, handleLikeToggle } = useLike(id, post, setPost);
+  const { comments, fetchComments, commentText, setCommentText, replyToId, submitting, inputRef, submitComment, handleReplyStart, cancelReply } = useCommentSection(id);
+  const { reportModal, setReportModal, reportReason, setReportReason, reporting, reportMsg, setReportMsg, handleReport } = usePostReport(id);
 
   useEffect(() => {
     Promise.all([fetchPost(), fetchComments()]).finally(() => setLoading(false));
-  }, [fetchPost, fetchComments]);
-
-  async function handleDeletePost() {
-    setDeleting(true);
-    try {
-      await axios.delete(`/api/posts/${id}`);
-      router.push("/feed");
-      router.refresh();
-    } finally {
-      setDeleting(false);
-      setShowDeleteDialog(false);
-    }
-  }
-
-  async function submitComment() {
-    if (!commentText.trim() || submitting) return;
-    setSubmitting(true);
-    try {
-      await axios.post(`/api/posts/${id}/comments`, {
-        content: commentText.trim(),
-        parentId: replyToId,
-      });
-      setCommentText("");
-      setReplyToId(null);
-      await fetchComments();
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function handleSubmitComment(e: React.FormEvent) {
-    e.preventDefault();
-    await submitComment();
-  }
-
-  async function handleLikeToggle() {
-    if (!post || liking) return;
-    setLiking(true);
-    try {
-      if (post.isLiked) {
-        const res = await axios.delete(`/api/posts/${id}/like`);
-        setPost((prev) =>
-          prev ? { ...prev, isLiked: false, likeCount: res.data.likeCount } : prev
-        );
-      } else {
-        const res = await axios.post(`/api/posts/${id}/like`);
-        setPost((prev) =>
-          prev ? { ...prev, isLiked: true, likeCount: res.data.likeCount } : prev
-        );
-      }
-    } catch {
-      // 에러 무시 (이미 좋아요 등)
-    } finally {
-      setLiking(false);
-    }
-  }
-
-  function handleReplyStart(commentId: string) {
-    setReplyToId(commentId);
-    inputRef.current?.focus();
-  }
-
-  function cancelReply() {
-    setReplyToId(null);
-    setCommentText("");
-  }
-
-  async function handleReport() {
-    if (!reportReason) return;
-    setReporting(true);
-    setReportMsg(null);
-    try {
-      await axios.post("/api/reports", { targetType: "POST", targetId: id, reason: reportReason });
-      setReportMsg("Your report has been submitted.");
-    } catch (err) {
-      const msg = axios.isAxiosError(err) ? err.response?.data?.error : "Something went wrong.";
-      setReportMsg(msg);
-    } finally {
-      setReporting(false);
-    }
-  }
+  }, [fetchPost, fetchComments, setLoading]);
 
   const isOwner = session?.user?.id === post?.author.id;
   const replyTargetAuthor = replyToId ? comments.find((c) => c.id === replyToId)?.author : null;
   const replyTarget = replyTargetAuthor
     ? (replyTargetAuthor.username ? `@${replyTargetAuthor.username}` : replyTargetAuthor.name)
     : null;
+
+  async function handleSubmitComment(e: React.FormEvent) {
+    e.preventDefault();
+    await submitComment();
+  }
 
   return (
     <div className="flex flex-col flex-1" style={{ background: "var(--bg-card)" }}>
@@ -160,25 +50,18 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
         <p className="text-center mt-8 text-sm" style={{ color: "var(--danger)" }}>Post not found.</p>
       ) : (
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* 스크롤 영역 */}
           <div className="flex-1 overflow-y-auto pb-20">
-            {/* 이미지 캐러셀 — 탭하면 라이트박스 */}
             <ImageCarousel images={post.images} enableLightbox />
 
-            {/* 본문 */}
             <div className="p-4">
-              {/* 작성자 행 + edit/delete */}
+              {/* 작성자 행 */}
               <div className="flex items-center justify-between mb-2 gap-2">
                 <a
                   href={post.author.username ? `/profile/${post.author.username}` : "#"}
                   className="flex items-center gap-2 min-w-0"
                   style={{ textDecoration: "none" }}
                 >
-                  <Avatar
-                    avatarUrl={post.author.avatarUrl ?? null}
-                    username={post.author.username ?? post.author.name}
-                    size={28}
-                  />
+                  <Avatar avatarUrl={post.author.avatarUrl ?? null} username={post.author.username ?? post.author.name} size={28} />
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-bold truncate" style={{ color: "var(--point)" }}>
                       {post.author.username ? `@${post.author.username}` : post.author.name}
@@ -188,15 +71,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                         {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: enUS })}
                       </span>
                       {post.visibility === "FRIENDS" && (
-                        <span
-                          className="flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.5"
-                          style={{
-                            background: "var(--point)",
-                            color: "#fff",
-                            borderRadius: 4,
-                            lineHeight: 1,
-                          }}
-                        >
+                        <span className="flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.5" style={{ background: "var(--point)", color: "#fff", borderRadius: 4, lineHeight: 1 }}>
                           <Lock size={8} strokeWidth={2.5} />
                           friends
                         </span>
@@ -204,21 +79,13 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                     </div>
                   </div>
                 </a>
+
                 {isOwner ? (
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => router.push(`/post/${id}/edit`)}
                       className="flex items-center gap-1 text-xs"
-                      style={{
-                        background: "var(--bg-button)",
-                        border: "1px solid var(--border)",
-                        boxShadow: "inset 1px 1px #fff, inset -1px -1px var(--shadow-lo)",
-                        borderRadius: 3,
-                        padding: "3px 8px",
-                        cursor: "pointer",
-                        color: "var(--text-base)",
-                        fontFamily: "Tahoma, sans-serif",
-                      }}
+                      style={{ background: "var(--bg-button)", border: "1px solid var(--border)", boxShadow: "inset 1px 1px #fff, inset -1px -1px var(--shadow-lo)", borderRadius: 3, padding: "3px 8px", cursor: "pointer", color: "var(--text-base)", fontFamily: "Tahoma, sans-serif" }}
                     >
                       <Pencil size={11} strokeWidth={1.5} />
                       edit
@@ -226,16 +93,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                     <button
                       onClick={() => setShowDeleteDialog(true)}
                       className="flex items-center gap-1 text-xs"
-                      style={{
-                        background: "var(--bg-button)",
-                        border: "1px solid var(--border)",
-                        boxShadow: "inset 1px 1px #fff, inset -1px -1px var(--shadow-lo)",
-                        borderRadius: 3,
-                        padding: "3px 8px",
-                        cursor: "pointer",
-                        color: "var(--danger)",
-                        fontFamily: "Tahoma, sans-serif",
-                      }}
+                      style={{ background: "var(--bg-button)", border: "1px solid var(--border)", boxShadow: "inset 1px 1px #fff, inset -1px -1px var(--shadow-lo)", borderRadius: 3, padding: "3px 8px", cursor: "pointer", color: "var(--danger)", fontFamily: "Tahoma, sans-serif" }}
                     >
                       <Trash2 size={11} strokeWidth={1.5} />
                       delete
@@ -245,43 +103,27 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                   <button
                     onClick={() => { setReportModal(true); setReportReason(""); setReportMsg(null); }}
                     className="flex items-center gap-1 text-xs"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      color: "var(--text-sub)",
-                      padding: "3px 4px",
-                      fontFamily: "Tahoma, sans-serif",
-                    }}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-sub)", padding: "3px 4px", fontFamily: "Tahoma, sans-serif" }}
                   >
                     <Flag size={11} strokeWidth={1.5} />
                     report
                   </button>
                 )}
               </div>
+
               <p className="text-sm" style={{ color: "var(--text-base)" }}>
                 <MentionText text={post.content} />
               </p>
 
-              {/* 좋아요 버튼 */}
+              {/* 좋아요 */}
               <div className="flex items-center gap-2 mt-3">
                 <button
                   onClick={handleLikeToggle}
                   disabled={liking}
                   className="flex items-center gap-1.5 text-xs"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: post.isLiked ? "var(--danger)" : "var(--text-sub)",
-                    padding: 0,
-                  }}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: post.isLiked ? "var(--danger)" : "var(--text-sub)", padding: 0 }}
                 >
-                  <Heart
-                    size={15}
-                    strokeWidth={1.5}
-                    fill={post.isLiked ? "var(--danger)" : "none"}
-                  />
+                  <Heart size={15} strokeWidth={1.5} fill={post.isLiked ? "var(--danger)" : "none"} />
                   <span>{post.likeCount > 0 ? post.likeCount : ""}</span>
                 </button>
               </div>
@@ -295,48 +137,27 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                 {comments.reduce((acc, c) => acc + 1 + (c.replies?.length ?? 0), 0)} comments
               </p>
               {comments.length === 0 ? (
-                <p className="text-xs py-4 text-center" style={{ color: "var(--text-sub)" }}>
-                  Be the first to comment.
-                </p>
+                <p className="text-xs py-4 text-center" style={{ color: "var(--text-sub)" }}>Be the first to comment.</p>
               ) : (
                 comments.map((comment) => (
                   <div key={comment.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                    <CommentItem
-                      comment={comment}
-                      postId={id}
-                      onReplyStart={handleReplyStart}
-                      onUpdate={fetchComments}
-                    />
+                    <CommentItem comment={comment} postId={id} onReplyStart={handleReplyStart} onUpdate={fetchComments} />
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* 하단 고정 댓글 입력창 — 홈 바 회피 */}
+          {/* 댓글 입력 */}
           <form
             onSubmit={handleSubmitComment}
             className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-10"
-            style={{
-              background: "var(--bg-card)",
-              borderTop: "1px solid var(--border)",
-              paddingBottom: "env(safe-area-inset-bottom, 0px)",
-            }}
+            style={{ background: "var(--bg-card)", borderTop: "1px solid var(--border)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           >
             {replyTarget && (
-              <div
-                className="flex items-center justify-between px-3 py-1"
-                style={{ background: "var(--bg-page)", borderBottom: "1px solid var(--border)" }}
-              >
-                <span className="text-xs" style={{ color: "var(--point)" }}>
-                  Reply to {replyTarget}
-                </span>
-                <button
-                  type="button"
-                  onClick={cancelReply}
-                  className="text-xs"
-                  style={{ color: "var(--text-sub)", background: "none", border: "none", cursor: "pointer" }}
-                >
+              <div className="flex items-center justify-between px-3 py-1" style={{ background: "var(--bg-page)", borderBottom: "1px solid var(--border)" }}>
+                <span className="text-xs" style={{ color: "var(--point)" }}>Reply to {replyTarget}</span>
+                <button type="button" onClick={cancelReply} className="text-xs" style={{ color: "var(--text-sub)", background: "none", border: "none", cursor: "pointer" }}>
                   cancel
                 </button>
               </div>
@@ -349,12 +170,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                 inputRef={inputRef}
                 onSubmit={submitComment}
               />
-              <button
-                type="submit"
-                className="xp-btn text-sm px-3"
-                disabled={submitting || !commentText.trim()}
-                style={{ color: "var(--point)", fontWeight: "bold" }}
-              >
+              <button type="submit" className="xp-btn text-sm px-3" disabled={submitting || !commentText.trim()} style={{ color: "var(--point)", fontWeight: "bold" }}>
                 {submitting ? "..." : "send"}
               </button>
             </div>
@@ -388,11 +204,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                 </>
               ) : (
                 <>
-                  <select
-                    className="xp-input text-xs"
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value)}
-                  >
+                  <select className="xp-input text-xs" value={reportReason} onChange={(e) => setReportReason(e.target.value)}>
                     <option value="">select a reason</option>
                     <option value="SEXUAL_CONTENT">sexual content</option>
                     <option value="HATE_SPEECH">hate speech</option>
@@ -403,12 +215,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                   </select>
                   <div className="flex gap-2 justify-end">
                     <button className="xp-btn text-xs" onClick={() => setReportModal(false)}>cancel</button>
-                    <button
-                      className="xp-btn text-xs"
-                      style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
-                      disabled={!reportReason || reporting}
-                      onClick={handleReport}
-                    >
+                    <button className="xp-btn text-xs" style={{ color: "var(--danger)", borderColor: "var(--danger)" }} disabled={!reportReason || reporting} onClick={handleReport}>
                       {reporting ? "submitting..." : "submit report"}
                     </button>
                   </div>
