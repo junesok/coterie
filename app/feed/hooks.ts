@@ -2,9 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { UserPlus, UserMinus, UserCheck } from "lucide-react";
 import axios from "axios";
-import type { Tab, Post, SearchUser, FriendStatus } from "./types";
+import type { Tab, Post, SearchUser } from "./types";
 
 // ── 피드 게시물 목록 ─────────────────────────────────────────────
 export function useFeed(tab: Tab) {
@@ -102,12 +101,5 @@ export function useUserSearch() {
     }
   }
 
-  function friendButtonConfig(status: FriendStatus) {
-    if (status === "friends") return { icon: <UserMinus size={11} strokeWidth={1.5} />, label: "friends" };
-    if (status === "pending_sent") return { icon: <UserMinus size={11} strokeWidth={1.5} />, label: "cancel" };
-    if (status === "pending_received") return { icon: <UserCheck size={11} strokeWidth={1.5} />, label: "respond" };
-    return { icon: <UserPlus size={11} strokeWidth={1.5} />, label: "add" };
-  }
-
-  return { showSearch, setShowSearch, query, searchResults, searching, actionLoadingId, searchInputRef, openSearch, handleQueryChange, handleFriendAction, friendButtonConfig, router };
+  return { showSearch, setShowSearch, query, searchResults, searching, actionLoadingId, searchInputRef, openSearch, handleQueryChange, handleFriendAction, router };
 }

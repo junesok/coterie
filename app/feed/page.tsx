@@ -2,19 +2,26 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PenLine, Settings, Globe, Users, Search, X } from "lucide-react";
+import { PenLine, Settings, Globe, Users, Search, X, UserPlus, UserMinus, UserCheck } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
 import { PostCard } from "@/components/PostCard";
 import { Avatar } from "@/components/Avatar";
 import { useFeed, useUserSearch } from "./hooks";
-import type { Tab } from "./types";
+import type { Tab, FriendStatus } from "./types";
+
+function friendButtonConfig(status: FriendStatus) {
+  if (status === "friends") return { icon: <UserMinus size={11} strokeWidth={1.5} />, label: "friends" };
+  if (status === "pending_sent") return { icon: <UserMinus size={11} strokeWidth={1.5} />, label: "cancel" };
+  if (status === "pending_received") return { icon: <UserCheck size={11} strokeWidth={1.5} />, label: "respond" };
+  return { icon: <UserPlus size={11} strokeWidth={1.5} />, label: "add" };
+}
 
 export default function FeedPage() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("all");
 
   const { posts, page, totalPages, loading, loadMore } = useFeed(tab);
-  const { showSearch, setShowSearch, query, searchResults, searching, actionLoadingId, searchInputRef, openSearch, handleQueryChange, handleFriendAction, friendButtonConfig } = useUserSearch();
+  const { showSearch, setShowSearch, query, searchResults, searching, actionLoadingId, searchInputRef, openSearch, handleQueryChange, handleFriendAction } = useUserSearch();
 
   return (
     <div className="flex flex-col flex-1" style={{ background: "var(--bg-page)" }}>
