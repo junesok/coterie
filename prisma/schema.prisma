@@ -18,6 +18,7 @@ model User {
   isSuspended       Boolean        @default(false)
   suspendedAt       DateTime?
   suspendedReason   String?
+  deletedAt         DateTime?      // 탈퇴 신청 시각 (null = 활성 계정, non-null = 탈퇴 대기)
   theme             String         @default("light")
   avatarUrl         String?        // Cloudinary URL, null이면 기본 아바타
   invitedById       String?

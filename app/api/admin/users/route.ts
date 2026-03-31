@@ -8,6 +8,7 @@ export async function GET() {
   if (error) return error;
 
   const users = await prisma.user.findMany({
+    where: { deletedAt: null },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,

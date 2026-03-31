@@ -26,6 +26,7 @@ export async function GET(
         avatarUrl: true,
         createdAt: true,
         isSuspended: true,
+        deletedAt: true,
         _count: {
           select: {
             posts: true,
@@ -42,6 +43,11 @@ export async function GET(
 
     if (user.isSuspended) {
       return NextResponse.json({ success: false, error: "suspended", isSuspended: true }, { status: 403 });
+    }
+
+    // Treat soft-deleted accounts as not found (profile must not be accessible during grace period)
+    if ((user as { deletedAt?: Date | null }).deletedAt) {
+      return NextResponse.json({ success: false, error: "User not found." }, { status: 404 });
     }
 
     // 비친구가 타인 프로필 볼 때 FRIENDS 게시물 숨김

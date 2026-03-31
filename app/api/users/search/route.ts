@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
       where: {
         isSuspended: false,
         isVerified: true,
+        deletedAt: null,
         id: { not: session.user.id },
         OR: [
           { username: { contains: q, mode: "insensitive" } },

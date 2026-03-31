@@ -2,8 +2,11 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { hardDeleteUser } from "@/lib/delete-user";
 
 const SUSPENDED_ROUTE = "/suspended";
+const GENERIC_AUTH_ERROR = "Username or password is incorrect.";
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -23,30 +26,47 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) {
-          throw new Error("유저네임과 비밀번호를 입력해 주세요.");
+          throw new Error("Please enter your username and password.");
         }
 
-        // username으로 유저 조회
         const user = await prisma.user.findUnique({
           where: { username: credentials.username.toLowerCase() },
         });
 
         if (!user) {
-          throw new Error("유저네임 또는 비밀번호가 올바르지 않습니다.");
+          throw new Error(GENERIC_AUTH_ERROR);
         }
 
-        // 이메일 인증 완료 여부 체크
+        // Accounts soft-deleted more than 30 days ago: hard delete then show generic error
+        if (user.deletedAt) {
+          const elapsed = Date.now() - user.deletedAt.getTime();
+          if (elapsed > THIRTY_DAYS_MS) {
+            await hardDeleteUser(user.id);
+            throw new Error(GENERIC_AUTH_ERROR);
+          }
+          // Within 30 days: allow login with pendingRecovery flag
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
+          if (!isPasswordValid) throw new Error(GENERIC_AUTH_ERROR);
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            username: user.username,
+            isAdmin: user.isAdmin,
+            avatarUrl: user.avatarUrl ?? null,
+            isSuspended: user.isSuspended ?? false,
+            pendingRecovery: true,
+          } as never;
+        }
+
         if (!user.isVerified) {
-          throw new Error("이메일 인증을 완료해 주세요.");
+          throw new Error("Please verify your email address before signing in.");
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.passwordHash
-        );
-
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!isPasswordValid) {
-          throw new Error("유저네임 또는 비밀번호가 올바르지 않습니다.");
+          throw new Error(GENERIC_AUTH_ERROR);
         }
 
         return {
@@ -57,19 +77,20 @@ export const authOptions: NextAuthOptions = {
           isAdmin: user.isAdmin,
           avatarUrl: user.avatarUrl ?? null,
           isSuspended: user.isSuspended ?? false,
-        };
+          pendingRecovery: false,
+        } as never;
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user, trigger, session: sessionUpdate }) {
       if (user) {
-        // 최초 로그인 시 DB 값으로 채움
         token.id = user.id;
         token.username = (user as { username?: string | null }).username ?? null;
         token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
         token.avatarUrl = (user as { avatarUrl?: string | null }).avatarUrl ?? null;
         token.isSuspended = (user as { isSuspended?: boolean }).isSuspended ?? false;
+        token.pendingRecovery = (user as { pendingRecovery?: boolean }).pendingRecovery ?? false;
       } else if (token.id) {
         // updateAge 주기마다 DB에서 isSuspended 재확인
         const dbUser = await prisma.user.findUnique({
@@ -78,10 +99,10 @@ export const authOptions: NextAuthOptions = {
         });
         token.isSuspended = dbUser?.isSuspended ?? false;
       }
-      // session.update() 호출 시 avatarUrl / username 갱신
       if (trigger === "update") {
         if (sessionUpdate?.avatarUrl !== undefined) token.avatarUrl = sessionUpdate.avatarUrl;
         if (sessionUpdate?.username !== undefined) token.username = sessionUpdate.username;
+        if (sessionUpdate?.pendingRecovery !== undefined) token.pendingRecovery = sessionUpdate.pendingRecovery;
       }
       return token;
     },
@@ -92,6 +113,7 @@ export const authOptions: NextAuthOptions = {
         session.user.isAdmin = token.isAdmin as boolean | undefined;
         session.user.avatarUrl = token.avatarUrl as string | null | undefined;
         session.user.isSuspended = token.isSuspended as boolean | undefined;
+        session.user.pendingRecovery = token.pendingRecovery as boolean | undefined;
       }
       return session;
     },

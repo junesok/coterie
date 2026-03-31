@@ -11,6 +11,7 @@ declare module "next-auth" {
       isAdmin?: boolean;
       avatarUrl?: string | null;
       isSuspended?: boolean;
+      pendingRecovery?: boolean;
     };
   }
 }
@@ -22,5 +23,6 @@ declare module "next-auth/jwt" {
     isAdmin?: boolean;
     avatarUrl?: string | null;
     isSuspended?: boolean;
+    pendingRecovery?: boolean;
   }
 }

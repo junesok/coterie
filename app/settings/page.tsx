@@ -25,6 +25,12 @@ export default function SettingsPage() {
   const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // 계정 탈퇴
+  const [showWithdrawSection, setShowWithdrawSection] = useState(false);
+  const [withdrawPw, setWithdrawPw] = useState("");
+  const [withdrawMsg, setWithdrawMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
+
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [codesLoading, setCodesLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
@@ -65,6 +71,23 @@ export default function SettingsPage() {
   async function handleSignOut() {
     await signOut({ redirect: false });
     router.push("/login");
+  }
+
+  async function handleWithdraw(e: React.FormEvent) {
+    e.preventDefault();
+    setWithdrawing(true);
+    setWithdrawMsg(null);
+    try {
+      await axios.post("/api/users/me/delete", { password: withdrawPw });
+      // Trigger session update so pendingRecovery is set on next login
+      await signOut({ redirect: false });
+      router.push("/login");
+    } catch (err) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.error : "Something went wrong.";
+      setWithdrawMsg({ text: msg, ok: false });
+    } finally {
+      setWithdrawing(false);
+    }
   }
 
   return (
@@ -178,6 +201,45 @@ export default function SettingsPage() {
               update
             </button>
           </form>
+        </div>
+
+        {/* 계정 탈퇴 */}
+        <div className="xp-window">
+          <div className="xp-titlebar">
+            <span>delete account</span>
+            <button
+              className="xp-ctrl-btn"
+              onClick={() => { setShowWithdrawSection((v) => !v); setWithdrawMsg(null); setWithdrawPw(""); }}
+            />
+          </div>
+          {showWithdrawSection && (
+            <form onSubmit={handleWithdraw} className="p-3 flex flex-col gap-2">
+              <p className="text-xs" style={{ color: "var(--text-sub)", lineHeight: 1.6 }}>
+                Your account will be scheduled for deletion. You have <strong style={{ color: "var(--text-base)" }}>30 days</strong> to recover it by signing in again. After 30 days, all data is permanently deleted.
+              </p>
+              <input
+                type="password"
+                className="xp-input text-sm"
+                value={withdrawPw}
+                onChange={(e) => setWithdrawPw(e.target.value)}
+                placeholder="confirm with your password"
+                autoComplete="current-password"
+              />
+              {withdrawMsg && (
+                <p className="text-xs" style={{ color: withdrawMsg.ok ? "var(--point)" : "var(--danger)" }}>
+                  {withdrawMsg.text}
+                </p>
+              )}
+              <button
+                type="submit"
+                className="xp-btn text-sm self-end"
+                style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
+                disabled={withdrawing || !withdrawPw}
+              >
+                {withdrawing ? "processing..." : "delete my account"}
+              </button>
+            </form>
+          )}
         </div>
 
         {/* 로그아웃 */}
